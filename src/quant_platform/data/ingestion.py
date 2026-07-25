@@ -127,6 +127,9 @@ class IngestionService:
                 await event_bus.emit("ingestion.completed", "ingestion",
                                     rows=self._rows_inserted, errors=len(self._errors))
                 logger.info(f"Ingestion complete: {self._rows_inserted} rows, {len(self._errors)} errors")
+
+                # AUTO-PIPELINE: trigger research after ingestion completes
+                await self._auto_start_research(profile_name)
             finally:
                 await provider.disconnect()
 
@@ -135,6 +138,40 @@ class IngestionService:
             self._completed_at = time.monotonic()
             logger.error(f"Ingestion failed: {e}")
             self._errors.append({"error": str(e), "fatal": True})
+
+    async def _auto_start_research(self, profile_name: str) -> None:
+        """Auto-trigger research + TV discovery + paper trading after ingestion."""
+        try:
+            from ..research.engine import research_engine
+            from ..config import get_settings
+            settings = get_settings()
+            source_mode = settings.research_source_mode
+
+            logger.info(f"AUTO-PIPELINE: Starting research for {profile_name} (source_mode={source_mode})")
+            await research_engine.start(profile_name, settings.research_top_n_assets, source_mode)
+
+            # Start TradingView continuous discovery in background
+            try:
+                from ..research.tradingview_source import TradingViewSource
+                tv = TradingViewSource(username=settings.tradingview_username, password=settings.tradingview_password)
+                import asyncio
+                asyncio.create_task(tv.run_continuous(settings.research_interval_minutes))
+                logger.info("AUTO-PIPELINE: TradingView continuous discovery started")
+            except Exception as e:
+                logger.debug(f"TV discovery auto-start skipped: {e}")
+
+            # Start paper trading in background
+            try:
+                from ..trading.executor import trading_executor
+                from ..trading.paper_broker import PaperBroker
+                broker = PaperBroker(initial_balance=1000000.0)
+                await trading_executor.start(broker, "paper_trading", 1000000.0, 60)
+                logger.info("AUTO-PIPELINE: Paper trading started")
+            except Exception as e:
+                logger.debug(f"Paper trading auto-start skipped: {e}")
+
+        except Exception as e:
+            logger.warning(f"Auto-pipeline start failed: {e}")
 
     async def _resolve_instruments(self, profile: MarketProfile, provider: DataProvider) -> list[dict[str, str]]:
         instruments = list(profile.instruments)
