@@ -6,16 +6,18 @@ from .tradingview_webhook import process_webhook
 from .position_sizing import calculate_position_size
 from .stop_loss import calculate_optimal_sl
 from .regime import classify_regime, classify_history
-from .combination import combine_strategies, generate_combinations
+from .combination import combine_strategies, generate_combinations, BestOfBestFinder, combine_three
 from .pine_export import export_to_pine
 from .activity_log import ResearchActivityLog, activity_log
+from .lineage import record_lineage, get_lineage, get_evolution_tree
 
 __all__ = [
     "ResearchEngine", "research_engine",
     "TradingViewSource", "process_webhook",
     "calculate_position_size", "calculate_optimal_sl",
     "classify_regime", "classify_history",
-    "combine_strategies", "generate_combinations",
+    "combine_strategies", "generate_combinations", "BestOfBestFinder", "combine_three",
     "export_to_pine",
     "ResearchActivityLog", "activity_log",
+    "record_lineage", "get_lineage", "get_evolution_tree",
 ]

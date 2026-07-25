@@ -23,6 +23,7 @@ from .position_sizing import calculate_position_size
 from .stop_loss import calculate_optimal_sl
 from .regime import classify_regime
 from .combination import combine_strategies, generate_combinations, BestOfBestFinder, combine_three
+from .lineage import record_lineage
 from .pine_export import export_to_pine
 from .activity_log import activity_log
 
@@ -346,6 +347,12 @@ class ResearchEngine:
                     f"trades={combo['total_trades']}, beats_all={combo.get('beats_all_components')}",
                     reasoning=f"Score {combo['score']:.1f}/100, components: {combo['components']}",
                 )
+
+            for combo in best:
+                try:
+                    record_lineage(f"best_{combo['name']}", combo["components"])
+                except Exception:
+                    pass
 
             if best:
                 logger.info(f"Best-of-best: {best[0]['name']} (wr={best[0]['win_rate']:.2%}, score={best[0]['score']:.1f})")

@@ -209,6 +209,8 @@ class StrategyORM(Base):
     is_original = Column(Boolean, nullable=False, default=False)
     is_publishable = Column(Boolean, nullable=False, default=False)
     parent_strategy_ids = Column(Text)
+    generation = Column(Integer, default=0)
+    lineage_path = Column(Text)
     pine_script = Column(Text)
     created_at = Column(DateTime, nullable=False, default=_utcnow)
     updated_at = Column(DateTime, nullable=False, default=_utcnow, onupdate=_utcnow)

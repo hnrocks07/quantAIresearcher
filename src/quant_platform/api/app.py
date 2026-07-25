@@ -21,7 +21,7 @@ from ..models import (
 from ..market_profiles import list_profiles, load_profile
 from ..data.ingestion import ingestion_service
 from ..data.scoring import score_strategy, rank_strategies
-from ..research import research_engine, activity_log
+from ..research import research_engine, activity_log, get_lineage, get_evolution_tree
 from ..research.tradingview_webhook import process_webhook
 from ..trading import trading_executor, PaperBroker, AngelBroker
 from ..trading.decision_log import trade_decision_log
@@ -277,6 +277,16 @@ async def get_strategy(strategy_id: int):
             "is_original": s.is_original, "is_publishable": s.is_publishable,
             "pine_script": s.pine_script,
         }
+
+
+@app.get("/strategies/{strategy_id}/lineage")
+async def strategy_lineage(strategy_id: int):
+    return get_lineage(strategy_id)
+
+
+@app.get("/strategies/evolution-tree")
+async def evolution_tree():
+    return get_evolution_tree()
 
 
 @app.get("/strategies/{strategy_id}/backtests")
