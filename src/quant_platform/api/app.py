@@ -279,6 +279,44 @@ async def get_strategy(strategy_id: int):
         }
 
 
+@app.post("/strategies/import")
+async def import_strategy(payload: dict):
+    """Manually import a strategy — Pine Script, custom params, or any trading logic."""
+    import json as _json
+    name = payload.get("name")
+    if not name:
+        return {"error": "name is required"}
+    pine_script = payload.get("pine_script")
+    parameters = payload.get("parameters", {})
+    description = payload.get("description", f"Manually imported: {name}")
+    source = payload.get("source", "manual")
+
+    if pine_script:
+        from ..research.tradingview_source import _parse_pine_to_strategy
+        parsed = _parse_pine_to_strategy(name, pine_script)
+        if parsed:
+            parameters = {**parsed, **parameters}
+
+    with get_db() as db:
+        existing = db.query(StrategyORM).filter(StrategyORM.name == name).first()
+        if existing:
+            return {"error": f"Strategy '{name}' already exists", "id": existing.id}
+        strategy = StrategyORM(
+            name=name,
+            description=description,
+            source=source,
+            version="1.0",
+            parameters=_json.dumps(parameters),
+            status="discovered",
+            pine_script=pine_script,
+        )
+        db.add(strategy)
+        db.flush()
+        sid = strategy.id
+    activity_log.log_action("manual_import", name, f"source={source}, has_pine={bool(pine_script)}")
+    return {"status": "imported", "id": sid, "name": name, "parameters": parameters}
+
+
 @app.get("/strategies/{strategy_id}/lineage")
 async def strategy_lineage(strategy_id: int):
     return get_lineage(strategy_id)

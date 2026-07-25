@@ -41,9 +41,11 @@ NSE_SYMBOLS = [
 ]
 
 INTERVALS = {
-    "1d": Interval.INTERVAL_1_DAY if _TV_AVAILABLE else None,
-    "4h": Interval.INTERVAL_4_HOURS if _TV_AVAILABLE else None,
+    "5m": Interval.INTERVAL_5_MINUTES if _TV_AVAILABLE else None,
+    "15m": Interval.INTERVAL_15_MINUTES if _TV_AVAILABLE else None,
     "1h": Interval.INTERVAL_1_HOUR if _TV_AVAILABLE else None,
+    "4h": Interval.INTERVAL_4_HOURS if _TV_AVAILABLE else None,
+    "1d": Interval.INTERVAL_1_DAY if _TV_AVAILABLE else None,
     "1w": Interval.INTERVAL_1_WEEK if _TV_AVAILABLE else None,
 }
 
