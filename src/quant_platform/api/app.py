@@ -51,6 +51,10 @@ async def lifespan(app: FastAPI):
     from ..data.yfinance_provider import YFinanceProvider
     from ..data.nse_provider import NSEProvider
     from ..data.crypto_provider import CryptoProvider
+    try:
+        from ..data.jugaad_provider import JugaadNSEProvider
+    except ImportError:
+        JugaadNSEProvider = None
     registry.register_broker("paper", PaperBroker)
     registry.register_broker("angel", AngelBroker)
     registry.register_research("tradingview", TradingViewSource)
@@ -59,6 +63,8 @@ async def lifespan(app: FastAPI):
     registry.register_data_provider("yfinance", YFinanceProvider)
     registry.register_data_provider("nse_bhav", NSEProvider)
     registry.register_data_provider("crypto", CryptoProvider)
+    if JugaadNSEProvider is not None:
+        registry.register_data_provider("jugaad_nse", JugaadNSEProvider)
 
     await event_bus.emit("system.startup", "api", mode=settings.run_mode.value)
 

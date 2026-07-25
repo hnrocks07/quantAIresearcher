@@ -6,6 +6,7 @@ from .scoring import score_strategy, rank_strategies, StrategyScore
 from .yfinance_provider import YFinanceProvider
 from .nse_provider import NSEProvider
 from .crypto_provider import CryptoProvider
+from .jugaad_provider import JugaadNSEProvider
 from ..plugins.data_provider import DataProvider
 
 __all__ = [
@@ -13,4 +14,5 @@ __all__ = [
     "BacktestEngine", "BacktestResult",
     "score_strategy", "rank_strategies", "StrategyScore",
     "DataProvider", "YFinanceProvider", "NSEProvider", "CryptoProvider",
+    "JugaadNSEProvider",
 ]
