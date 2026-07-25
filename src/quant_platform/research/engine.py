@@ -111,18 +111,24 @@ class ResearchEngine:
                 logger.info(f"Research started for {profile_name}")
                 activity_log.log_action("research_started", profile_name, f"source_mode={source_mode}")
 
-                # TradingView discovery
+                # TradingView auto-discovery: pull community strategies + multi-TF signals
                 if source_mode in ("tradingview", "both") and _TV_SOURCE:
                     try:
                         tv = _TV_SOURCE()
                         await tv.connect()
-                        imported = await tv.discover_strategies(limit=10)
+                        imported = await tv.discover_strategies(limit=50)
                         for imp in imported:
+                            params = imp.parameters if isinstance(imp.parameters, dict) else {}
                             self._ensure_strategy(
-                                imp.name, imp.parameters or {}, imp.name, source="tradingview"
+                                imp.name, params, imp.name, source=imp.source or "tradingview"
                             )
-                            activity_log.log_action("tv_import", imp.name, f"rec={imp.parameters}")
+                            activity_log.log_action(
+                                "tv_strategy_imported", imp.name,
+                                f"source={imp.source}, type={params.get('type', 'unknown')}",
+                                reasoning=imp.description,
+                            )
                         await tv.disconnect()
+                        logger.info(f"TradingView discovery: {len(imported)} strategies imported")
                     except Exception as e:
                         logger.warning(f"TradingView discovery failed, falling back: {e}")
                         self._errors.append({"source": "tradingview", "error": str(e)})

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from contextlib import asynccontextmanager
 from typing import Any
 
@@ -424,6 +425,22 @@ async def tradingview_webhook(payload: dict):
 @app.get("/research/activity-log")
 async def get_activity_log(limit: int = 100):
     return activity_log.get_log(limit)
+
+
+@app.post("/research/tv-discovery/start")
+async def start_tv_discovery(interval_minutes: int = 60):
+    from ..research.tradingview_source import TradingViewSource
+    tv = TradingViewSource()
+    asyncio.create_task(tv.run_continuous(interval_minutes))
+    return {"status": "started", "interval_minutes": interval_minutes}
+
+
+@app.post("/research/tv-discovery/stop")
+async def stop_tv_discovery():
+    from ..research.tradingview_source import TradingViewSource
+    tv = TradingViewSource()
+    tv.stop_continuous()
+    return {"status": "stopped"}
 
 
 # --- Risk Management ---
