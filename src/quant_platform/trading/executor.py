@@ -9,16 +9,19 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import Any
 
+from ..config import get_settings, RunMode
 from ..database import get_db
 from ..models import (
     StrategyORM, AssetORM, OHLCVORM, PortfolioORM, PositionORM, TradeORM,
     StrategyStatus, PositionStatus,
 )
 from ..plugins.broker import BrokerAdapter, FeeSchedule
+from ..plugins.llm import LLMProvider
 from ..kill_switch import kill_switch
 from ..event_bus import event_bus
 from ..logging import get_logger
 from ..research.strategies import BUILTIN_STRATEGIES
+from ..agents.activity_feed import activity_feed
 
 logger = get_logger("trading_executor")
 
@@ -32,7 +35,7 @@ class ExecutorStatus(str, Enum):
 
 class TradingExecutor:
 
-    def __init__(self):
+    def __init__(self, llm_provider: LLMProvider | None = None):
         self._status = ExecutorStatus.IDLE
         self._broker: BrokerAdapter | None = None
         self._portfolio_id: int | None = None
@@ -40,6 +43,7 @@ class TradingExecutor:
         self._stop_requested: bool = False
         self._task: asyncio.Task | None = None
         self._cycle_count: int = 0
+        self._llm_provider = llm_provider
 
     def status(self) -> dict[str, Any]:
         return {
@@ -85,11 +89,17 @@ class TradingExecutor:
         self._stop_requested = True
         return {"status": "stop_requested"}
 
-    async def _run_loop(self, interval: int) -> None:
+    async def _run_loop(self, interval: int, max_cycles: int = 0) -> None:
+        settings = get_settings()
+
+        # In LOCAL mode, default to 10 cycles if not specified
+        if max_cycles == 0 and settings.run_mode == RunMode.LOCAL:
+            max_cycles = 10
+
         try:
             while not self._stop_requested:
                 try:
-                    kill_switch.check_or_raise()
+                    kill_switch.check_or_raise("execute_cycle")
                 except RuntimeError:
                     self._status = ExecutorStatus.KILLED
                     logger.warning("Kill switch active — executor halted")
@@ -98,6 +108,11 @@ class TradingExecutor:
 
                 await self._execute_cycle()
                 self._cycle_count += 1
+
+                # In LOCAL mode, stop after max_cycles
+                if max_cycles > 0 and self._cycle_count >= max_cycles:
+                    logger.info(f"Local mode: completed {max_cycles} cycles, stopping")
+                    break
 
                 await asyncio.sleep(interval)
 
@@ -122,6 +137,24 @@ class TradingExecutor:
                 await self._execute_strategy(strategy)
             except Exception as e:
                 logger.warning(f"Strategy {strategy.name} execution error: {e}")
+
+        # Post-cycle: promotion check
+        try:
+            from .promotion import PromotionManager
+            settings = get_settings()
+            pm = PromotionManager(settings)
+            with get_db() as db:
+                paper = db.query(StrategyORM).filter(
+                    StrategyORM.status == StrategyStatus.PAPER_TRADING.value
+                ).all()
+                for s in paper:
+                    trades = db.query(TradeORM).filter(TradeORM.strategy_id == s.id).all()
+                    result = pm.evaluate(s, trades)
+                    if result["eligible"]:
+                        pm.promote(s.id, db)
+                        activity_feed.log("promotion_manager", "promote", {"strategy_id": s.id})
+        except Exception as e:
+            logger.warning(f"Promotion check error: {e}")
 
     async def _execute_strategy(self, strategy: StrategyORM) -> None:
         params = json.loads(strategy.parameters) if strategy.parameters else {}

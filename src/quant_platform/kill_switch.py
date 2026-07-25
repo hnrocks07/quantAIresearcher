@@ -7,6 +7,8 @@ import time
 from datetime import datetime, timezone
 from typing import Any
 
+import httpx
+
 from .event_bus import event_bus
 from .logging import get_logger, audit
 
@@ -52,6 +54,7 @@ class KillSwitch:
         audit.log("kill_switch_triggered", source, {"reason": reason})
         await event_bus.emit("kill_switch.triggered", source, reason=reason)
         logger.critical(f"KILL SWITCH TRIGGERED by {source}: {reason}")
+        await self._send_telegram(f"KILL SWITCH TRIGGERED by {source}: {reason}")
 
     async def reset(self, source: str) -> None:
         self._active = False
@@ -67,9 +70,26 @@ class KillSwitch:
         audit.log("kill_switch_reset", source)
         await event_bus.emit("kill_switch.reset", source)
         logger.info(f"Kill switch reset by {source}")
+        await self._send_telegram(f"Kill switch RESET by {source}")
 
     def heartbeat(self) -> None:
         self._last_heartbeat = time.monotonic()
+
+    async def _send_telegram(self, message: str) -> None:
+        """Send a notification via Telegram if bot token and chat ID are configured."""
+        from .config import get_settings
+        settings = get_settings()
+        if not settings.telegram_bot_token or not settings.telegram_chat_id:
+            return
+        url = f"https://api.telegram.org/bot{settings.telegram_bot_token}/sendMessage"
+        payload = {"chat_id": settings.telegram_chat_id, "text": message}
+        try:
+            async with httpx.AsyncClient() as client:
+                resp = await client.post(url, json=payload, timeout=10.0)
+                if resp.status_code != 200:
+                    logger.warning(f"Telegram notification failed: {resp.status_code} {resp.text}")
+        except Exception as e:
+            logger.warning(f"Telegram notification error: {e}")
 
     def check_or_raise(self, action: str) -> None:
         if not self.is_safe_to_trade:

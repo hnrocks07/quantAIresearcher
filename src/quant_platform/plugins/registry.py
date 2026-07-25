@@ -7,6 +7,7 @@ from typing import Any
 from .broker import BrokerAdapter
 from .research import ResearchSource
 from .llm import LLMProvider
+from .data_provider import DataProvider
 
 
 class PluginRegistry:
@@ -15,6 +16,7 @@ class PluginRegistry:
         self._brokers: dict[str, type[BrokerAdapter]] = {}
         self._research: dict[str, type[ResearchSource]] = {}
         self._llm: dict[str, type[LLMProvider]] = {}
+        self._data_providers: dict[str, type[DataProvider]] = {}
 
     def register_broker(self, name: str, cls: type[BrokerAdapter]) -> None:
         self._brokers[name] = cls
@@ -24,6 +26,9 @@ class PluginRegistry:
 
     def register_llm(self, name: str, cls: type[LLMProvider]) -> None:
         self._llm[name] = cls
+
+    def register_data_provider(self, name: str, cls: type[DataProvider]) -> None:
+        self._data_providers[name] = cls
 
     def get_broker(self, name: str, **kwargs: Any) -> BrokerAdapter:
         if name not in self._brokers:
@@ -40,6 +45,11 @@ class PluginRegistry:
             raise KeyError(f"LLM provider '{name}' not registered. Available: {list(self._llm.keys())}")
         return self._llm[name](**kwargs)
 
+    def get_data_provider(self, name: str, **kwargs: Any) -> DataProvider:
+        if name not in self._data_providers:
+            raise KeyError(f"Data provider '{name}' not registered. Available: {list(self._data_providers.keys())}")
+        return self._data_providers[name](**kwargs)
+
     def list_brokers(self) -> list[str]:
         return list(self._brokers.keys())
 
@@ -48,6 +58,9 @@ class PluginRegistry:
 
     def list_llm(self) -> list[str]:
         return list(self._llm.keys())
+
+    def list_data_providers(self) -> list[str]:
+        return list(self._data_providers.keys())
 
 
 registry = PluginRegistry()

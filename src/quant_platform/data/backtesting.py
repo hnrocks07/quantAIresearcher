@@ -1,4 +1,4 @@
-"""Backtesting engine — VectorBT-based, fee-aware scoring."""
+"""Backtesting engine — Custom signal-based, fee-aware scoring."""
 
 from __future__ import annotations
 

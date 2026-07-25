@@ -20,9 +20,17 @@ from ..models import (
 from ..market_profiles import list_profiles, load_profile
 from ..data.ingestion import ingestion_service
 from ..data.scoring import score_strategy, rank_strategies
-from ..research import research_engine
-from ..trading import trading_executor, PaperBroker
-from ..risk import risk_manager
+from ..research import research_engine, activity_log
+from ..research.tradingview_webhook import process_webhook
+from ..trading import trading_executor, PaperBroker, AngelBroker
+from ..trading.decision_log import trade_decision_log
+from ..research.tradingview_source import TradingViewSource
+from ..risk import (
+    risk_manager, DailyLossMonitor, PositionLimiter, PerformanceMonitor,
+    AutoAdjuster, StrategyRotator, review_log,
+)
+from ..agents.activity_feed import activity_feed as agent_activity_feed
+from ..trading.promotion import PromotionManager
 
 logger = get_logger("api")
 
@@ -35,6 +43,23 @@ async def lifespan(app: FastAPI):
 
     engine = get_engine()
     Base.metadata.create_all(bind=engine)
+
+    # Wire up plugin registry with default adapters
+    from ..plugins.registry import registry
+    from ..trading.paper_broker import PaperBroker
+    from ..llm_adapters import ClaudeAdapter, OllamaAdapter
+    from ..data.yfinance_provider import YFinanceProvider
+    from ..data.nse_provider import NSEProvider
+    from ..data.crypto_provider import CryptoProvider
+    registry.register_broker("paper", PaperBroker)
+    registry.register_broker("angel", AngelBroker)
+    registry.register_research("tradingview", TradingViewSource)
+    registry.register_llm("claude", ClaudeAdapter)
+    registry.register_llm("ollama", OllamaAdapter)
+    registry.register_data_provider("yfinance", YFinanceProvider)
+    registry.register_data_provider("nse_bhav", NSEProvider)
+    registry.register_data_provider("crypto", CryptoProvider)
+
     await event_bus.emit("system.startup", "api", mode=settings.run_mode.value)
 
     yield
@@ -46,7 +71,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Quant Platform",
-    version="0.3.0",
+    version="0.4.0",
     lifespan=lifespan,
 )
 
@@ -64,7 +89,7 @@ async def health():
     settings = get_settings()
     return {
         "status": "ok",
-        "version": "0.3.0",
+        "version": "0.4.0",
         "run_mode": settings.run_mode.value,
         "kill_switch": kill_switch.status(),
     }
@@ -361,8 +386,16 @@ async def start_trading(
     portfolio_name: str = "paper_trading",
     initial_capital: float = 1000000.0,
     interval: int = 60,
+    broker_type: str = "paper",
 ):
-    broker = PaperBroker(initial_balance=initial_capital)
+    from ..plugins.registry import registry
+    if broker_type == "paper":
+        broker = PaperBroker(initial_balance=initial_capital)
+    else:
+        try:
+            broker = registry.get_broker(broker_type)
+        except KeyError:
+            return {"error": f"Unknown broker: {broker_type}"}
     return await trading_executor.start(broker, portfolio_name, initial_capital, interval)
 
 
@@ -374,6 +407,17 @@ async def trading_status():
 @app.post("/trading/stop")
 async def stop_trading():
     return await trading_executor.stop()
+
+
+@app.post("/webhooks/tradingview")
+async def tradingview_webhook(payload: dict):
+    result = process_webhook(payload)
+    return result
+
+
+@app.get("/research/activity-log")
+async def get_activity_log(limit: int = 100):
+    return activity_log.get_log(limit)
 
 
 # --- Risk Management ---
@@ -396,3 +440,105 @@ async def stress_test(regime: str = "bearish"):
 @app.post("/risk/promote-demote")
 async def promote_demote():
     return risk_manager.promote_or_demote()
+
+
+# --- Agent Activity Feed ---
+
+@app.get("/agents/activity-feed")
+async def get_agent_activity_feed(limit: int = 100):
+    return agent_activity_feed.get_feed(limit)
+
+
+@app.get("/agents/activity-feed/{agent_name}")
+async def get_agent_activity_by_name(agent_name: str, limit: int = 50):
+    return agent_activity_feed.get_by_agent(agent_name, limit)
+
+
+# --- Promotion ---
+
+@app.post("/trading/promotion/evaluate/{strategy_id}")
+async def evaluate_promotion(strategy_id: int):
+    settings = get_settings()
+    pm = PromotionManager(settings)
+    with get_db() as db:
+        s = db.query(StrategyORM).filter(StrategyORM.id == strategy_id).first()
+        if not s:
+            return {"error": "Strategy not found"}
+        trades = db.query(TradeORM).filter(TradeORM.strategy_id == strategy_id).all()
+        return pm.evaluate(s, trades)
+
+
+# --- Risk Monitoring ---
+
+@app.get("/risk/daily-loss")
+async def daily_loss():
+    settings = get_settings()
+    from ..kill_switch import kill_switch as ks
+    monitor = DailyLossMonitor(settings, ks)
+    with get_db() as db:
+        from datetime import datetime, timezone, timedelta
+        today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+        trades = db.query(TradeORM).filter(TradeORM.executed_at >= today_start).all()
+        portfolio = db.query(PortfolioORM).first()
+        capital = portfolio.initial_capital if portfolio else 1000000.0
+    return await monitor.check(trades, capital)
+
+
+@app.get("/risk/position-limits")
+async def position_limits(instrument: str = ""):
+    settings = get_settings()
+    limiter = PositionLimiter(settings)
+    with get_db() as db:
+        positions = db.query(PositionORM).filter(PositionORM.status == "open").all()
+        pos_list = [{"instrument": p.asset_id, "id": p.id} for p in positions]
+    return limiter.can_open(pos_list, instrument)
+
+
+@app.get("/risk/performance/{strategy_id}")
+async def strategy_performance(strategy_id: int, window_days: int = 30):
+    settings = get_settings()
+    monitor = PerformanceMonitor(settings)
+    with get_db() as db:
+        trades = db.query(TradeORM).filter(TradeORM.strategy_id == strategy_id).all()
+    return monitor.analyze(strategy_id, trades, window_days)
+
+
+@app.get("/risk/review-log")
+async def get_review_log(limit: int = 100, strategy_id: int | None = None):
+    return review_log.get_log(limit, strategy_id)
+
+
+@app.post("/risk/review/{strategy_id}")
+async def trigger_review(strategy_id: int):
+    with get_db() as db:
+        s = db.query(StrategyORM).filter(StrategyORM.id == strategy_id).first()
+        if not s:
+            return {"error": "Strategy not found"}
+        trades = db.query(TradeORM).filter(TradeORM.strategy_id == strategy_id).all()
+    settings = get_settings()
+    monitor = PerformanceMonitor(settings)
+    perf = monitor.analyze(strategy_id, trades)
+    adjuster = AutoAdjuster()
+    import json as _json
+    params = _json.loads(s.parameters) if s.parameters else {}
+    review_result = {"verdict": "adjust" if perf["underperforming"] else "keep", "parameter_changes": {}}
+    adjustment = adjuster.adjust(strategy_id, review_result, params)
+    review_log.log_review(strategy_id, "; ".join(perf["flags"]), perf["recommendation"], adjustment, params, adjustment["adjusted_params"])
+    return {"performance": perf, "adjustment": adjustment}
+
+
+@app.post("/risk/rotate")
+async def run_rotation():
+    settings = get_settings()
+    rotator = StrategyRotator(settings)
+    monitor = PerformanceMonitor(settings)
+    with get_db() as db:
+        strategies = db.query(StrategyORM).filter(
+            StrategyORM.status.in_(["paper_trading", "promoted", "shortlisted"])
+        ).all()
+        strat_list = [{"id": s.id, "name": s.name} for s in strategies]
+        perf_data = {}
+        for s in strategies:
+            trades = db.query(TradeORM).filter(TradeORM.strategy_id == s.id).all()
+            perf_data[s.id] = monitor.analyze(s.id, trades)
+    return rotator.rotate(strat_list, perf_data)

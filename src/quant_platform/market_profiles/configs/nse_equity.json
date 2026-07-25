@@ -1,0 +1,33 @@
+{
+  "name": "nse_equity",
+  "display_name": "NSE Equities & Indexes",
+  "data_provider": "yfinance",
+  "currency": "INR",
+  "exchange": "NSE",
+  "asset_type": "equity",
+  "history_years": 20,
+  "lot_size_default": 1,
+  "tick_size_default": 0.05,
+  "trading_hours": {
+    "market_open": "09:15",
+    "market_close": "15:30",
+    "timezone": "Asia/Kolkata",
+    "pre_market_open": "09:00",
+    "pre_market_close": "09:15"
+  },
+  "fee_defaults": {
+    "commission_per_order": 20.0,
+    "commission_pct": 0.0003,
+    "stt_pct": 0.001,
+    "gst_pct": 0.18,
+    "exchange_charge_pct": 0.0000345,
+    "sebi_charge_pct": 0.000001,
+    "stamp_duty_pct": 0.00015
+  },
+  "instruments_source": "nifty500",
+  "instruments": [
+    {"symbol": "^NSEI", "name": "NIFTY 50", "asset_type": "index"},
+    {"symbol": "^NSEBANK", "name": "BANKNIFTY", "asset_type": "index"},
+    {"symbol": "NIFTY_FIN_SERVICE.NS", "name": "FINNIFTY", "asset_type": "index"}
+  ]
+}

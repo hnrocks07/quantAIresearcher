@@ -116,6 +116,7 @@ body {
 .grid-2 { grid-template-columns: repeat(2, 1fr); }
 .grid-3 { grid-template-columns: repeat(3, 1fr); }
 .grid-4 { grid-template-columns: repeat(4, 1fr); }
+.grid-6 { grid-template-columns: repeat(6, 1fr); }
 
 .stat-value {
   font-size: 28px;
@@ -198,5 +199,5 @@ th {
   .sidebar { width: 60px; }
   .sidebar h2, .sidebar a span { display: none; }
   .main-content { margin-left: 60px; }
-  .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+  .grid-2, .grid-3, .grid-4, .grid-6 { grid-template-columns: 1fr; }
 }

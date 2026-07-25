@@ -7,6 +7,7 @@ import Trading from './pages/Trading';
 import Risk from './pages/Risk';
 import DataIngestion from './pages/DataIngestion';
 import KillSwitch from './pages/KillSwitch';
+import AgentMonitor from './pages/AgentMonitor';
 
 export default function App() {
   const [theme, setTheme] = useState('light');
@@ -21,13 +22,14 @@ export default function App() {
     <div className="app-layout">
       <nav className="sidebar">
         <h2>QUANT CMD</h2>
-        <NavLink to="/" end>Overview</NavLink>
-        <NavLink to="/strategies">Strategies</NavLink>
-        <NavLink to="/research">Research</NavLink>
-        <NavLink to="/trading">Trading</NavLink>
-        <NavLink to="/risk">Risk</NavLink>
-        <NavLink to="/data">Data</NavLink>
-        <NavLink to="/kill-switch">Kill Switch</NavLink>
+        <NavLink to="/" end>{'⌂'} Overview</NavLink>
+        <NavLink to="/strategies">{'≡'} Strategies</NavLink>
+        <NavLink to="/research">{'⌘'} Research</NavLink>
+        <NavLink to="/trading">{'⇄'} Trading</NavLink>
+        <NavLink to="/risk">{'⚠'} Risk</NavLink>
+        <NavLink to="/agents">{'⚙'} Agents</NavLink>
+        <NavLink to="/data">{'⇩'} Data</NavLink>
+        <NavLink to="/kill-switch">{'⛔'} Kill Switch</NavLink>
       </nav>
       <main className="main-content">
         <div className="page-header">
@@ -42,6 +44,7 @@ export default function App() {
           <Route path="/research" element={<Research />} />
           <Route path="/trading" element={<Trading />} />
           <Route path="/risk" element={<Risk />} />
+          <Route path="/agents" element={<AgentMonitor />} />
           <Route path="/data" element={<DataIngestion />} />
           <Route path="/kill-switch" element={<KillSwitch />} />
         </Routes>

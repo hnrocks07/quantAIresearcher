@@ -230,6 +230,30 @@ All data stored in PostgreSQL, never re-fetched. Only daily incremental delta fr
 
 **Ingestion service is autonomous** — once started, it fetches, retries, rate-limits, and recovers on its own. Claude only checks GET /ingest/status once per hour to verify completion. Zero token cost while data loads.
 
+## Git Strategy
+
+**Branching:**
+- main — stable, only merged after phase passes all tests
+- feature/phase-N — one branch per phase, merged to main on completion
+- hotfix/description — urgent fixes directly to main
+
+**Commit convention:**
+- Phase start: "phase N: start — [description]"
+- Deliverable done: "phase N.X: [deliverable name]"
+- Bug fix: "fix: [description]"
+- Refactor: "refactor: [description]"
+
+**Merge flow:**
+feature/phase-1 → main (after all 1.x tests pass)
+feature/phase-2 → main (after all 2.x tests pass)
+...and so on. Each phase merge = one clean merge commit on main.
+
+**Tags:**
+- v0.1.0 — Phase 0 complete (current)
+- v0.2.0 — Phase 1 complete (platform foundation)
+- v0.3.0 — Phase 2 complete (data + backtesting)
+- v1.0.0 — Phase FINAL complete (full system)
+
 ## Design Principles
 
 1. Local-first: runs completely on your laptop, same code deploys to server

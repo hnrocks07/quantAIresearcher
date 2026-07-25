@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import Any
 
+from ..config import get_settings, RunMode
 from ..database import get_db
 from ..models import AssetORM, OHLCVORM, StrategyORM, StrategyStatus
 from ..data.backtesting import BacktestEngine, BacktestResult
@@ -18,8 +19,21 @@ from ..market_profiles import load_profile
 from ..event_bus import event_bus
 from ..logging import get_logger
 from .strategies import BUILTIN_STRATEGIES, PARAMETER_GRID, SignalResult
+from .position_sizing import calculate_position_size
+from .stop_loss import calculate_optimal_sl
+from .regime import classify_regime
+from .combination import combine_strategies, generate_combinations
+from .pine_export import export_to_pine
+from .activity_log import activity_log
 
 logger = get_logger("research")
+
+_TV_SOURCE = None
+try:
+    from .tradingview_source import TradingViewSource
+    _TV_SOURCE = TradingViewSource
+except Exception:
+    pass
 
 
 class ResearchStatus(str, Enum):
@@ -62,7 +76,7 @@ class ResearchEngine:
     def errors(self) -> list[dict[str, Any]]:
         return self._errors[-100:]
 
-    async def start(self, profile_name: str = "nse_equity", top_n_assets: int = 50) -> dict[str, str]:
+    async def start(self, profile_name: str = "nse_equity", top_n_assets: int = 50, source_mode: str = "builtin") -> dict[str, str]:
         if self._status == ResearchStatus.RUNNING:
             return {"error": "Already running"}
 
@@ -74,82 +88,126 @@ class ResearchEngine:
         self._backtests_run = 0
         self._errors = []
         self._stop_requested = False
+        self._source_mode = source_mode
 
         self._task = asyncio.create_task(self._run(profile_name, top_n_assets))
-        return {"status": "started", "profile": profile_name}
+        return {"status": "started", "profile": profile_name, "source_mode": source_mode}
 
     async def stop(self) -> dict[str, str]:
         self._stop_requested = True
         return {"status": "stop_requested"}
 
     async def _run(self, profile_name: str, top_n_assets: int) -> None:
+        settings = get_settings()
+        source_mode = getattr(self, "_source_mode", "builtin")
+
         try:
-            profile = load_profile(profile_name)
-            fee_schedule = FeeSchedule(**profile.fee_defaults)
-            engine = BacktestEngine(fee_schedule=fee_schedule)
+            while True:
+                profile = load_profile(profile_name)
+                fee_schedule = FeeSchedule(**profile.fee_defaults)
+                engine = BacktestEngine(fee_schedule=fee_schedule)
 
-            await event_bus.emit("research.started", "research", profile=profile_name)
-            logger.info(f"Research started for {profile_name}")
+                await event_bus.emit("research.started", "research", profile=profile_name)
+                logger.info(f"Research started for {profile_name}")
+                activity_log.log_action("research_started", profile_name, f"source_mode={source_mode}")
 
-            with get_db() as db:
-                assets = db.query(AssetORM).filter(
-                    AssetORM.market_profile == profile_name,
-                    AssetORM.is_active == True,
-                ).limit(top_n_assets).all()
-                asset_ids = [(a.id, a.symbol) for a in assets]
+                # TradingView discovery
+                if source_mode in ("tradingview", "both") and _TV_SOURCE:
+                    try:
+                        tv = _TV_SOURCE()
+                        await tv.connect()
+                        imported = await tv.discover_strategies(limit=10)
+                        for imp in imported:
+                            self._ensure_strategy(
+                                imp.name, imp.parameters or {}, imp.name, source="tradingview"
+                            )
+                            activity_log.log_action("tv_import", imp.name, f"rec={imp.parameters}")
+                        await tv.disconnect()
+                    except Exception as e:
+                        logger.warning(f"TradingView discovery failed, falling back: {e}")
+                        self._errors.append({"source": "tradingview", "error": str(e)})
 
-            if not asset_ids:
-                logger.warning("No assets found for research — run ingestion first")
-                self._status = ResearchStatus.COMPLETED
-                self._completed_at = time.monotonic()
-                return
+                with get_db() as db:
+                    assets = db.query(AssetORM).filter(
+                        AssetORM.market_profile == profile_name,
+                        AssetORM.is_active == True,
+                    ).limit(top_n_assets).all()
+                    asset_ids = [(a.id, a.symbol) for a in assets]
 
-            for strat_name, strat_func in BUILTIN_STRATEGIES.items():
-                if self._stop_requested:
-                    break
+                if not asset_ids:
+                    logger.warning("No assets found for research — run ingestion first")
+                    self._status = ResearchStatus.COMPLETED
+                    self._completed_at = time.monotonic()
+                    return
 
-                param_sets = PARAMETER_GRID.get(strat_name, [{}])
-                for params in param_sets:
-                    if self._stop_requested:
-                        break
-
-                    full_name = f"{strat_name}_{json.dumps(params, sort_keys=True)}"
-                    self._current_work = full_name
-
-                    strategy_id = self._ensure_strategy(strat_name, params, full_name)
-
-                    for asset_id, symbol in asset_ids:
+                if source_mode in ("builtin", "both"):
+                    for strat_name, strat_func in BUILTIN_STRATEGIES.items():
                         if self._stop_requested:
                             break
 
-                        try:
-                            self._run_single_backtest(
-                                engine, strat_func, params, strategy_id, asset_id, symbol
-                            )
-                            self._backtests_run += 1
-                        except Exception as e:
-                            self._errors.append({
-                                "strategy": full_name,
-                                "symbol": symbol,
-                                "error": str(e),
-                            })
+                        param_sets = PARAMETER_GRID.get(strat_name, [{}])
+                        for params in param_sets:
+                            if self._stop_requested:
+                                break
 
-                    score = score_strategy(strategy_id)
-                    if score and score.win_rate >= PROMOTION_THRESHOLD and score.is_fee_profitable:
-                        self._strategies_shortlisted += 1
+                            full_name = f"{strat_name}_{json.dumps(params, sort_keys=True)}"
+                            self._current_work = full_name
 
-                    self._strategies_tested += 1
+                            strategy_id = self._ensure_strategy(strat_name, params, full_name)
+                            activity_log.log_action("backtest_start", full_name, f"assets={len(asset_ids)}")
 
-                    if self._strategies_tested % 5 == 0:
-                        logger.info(f"Research progress: {self._strategies_tested} strategies, {self._backtests_run} backtests")
+                            for asset_id, symbol in asset_ids:
+                                if self._stop_requested:
+                                    break
 
-            self._status = ResearchStatus.STOPPED if self._stop_requested else ResearchStatus.COMPLETED
-            self._completed_at = time.monotonic()
-            await event_bus.emit("research.completed", "research",
-                                tested=self._strategies_tested,
-                                shortlisted=self._strategies_shortlisted,
-                                backtests=self._backtests_run)
-            logger.info(f"Research complete: {self._strategies_tested} strategies, {self._strategies_shortlisted} shortlisted")
+                                try:
+                                    self._run_single_backtest(
+                                        engine, strat_func, params, strategy_id, asset_id, symbol
+                                    )
+                                    self._backtests_run += 1
+                                except Exception as e:
+                                    self._errors.append({
+                                        "strategy": full_name,
+                                        "symbol": symbol,
+                                        "error": str(e),
+                                    })
+
+                            score = score_strategy(strategy_id)
+                            if score and score.win_rate >= PROMOTION_THRESHOLD and score.is_fee_profitable:
+                                self._strategies_shortlisted += 1
+                                activity_log.log_action("shortlisted", full_name, f"win_rate={score.win_rate}")
+
+                                # Position sizing and stop loss for winners
+                                self._enrich_winner(strategy_id, asset_ids, strat_name, params)
+
+                            self._strategies_tested += 1
+
+                            if self._strategies_tested % 5 == 0:
+                                logger.info(f"Research progress: {self._strategies_tested} strategies, {self._backtests_run} backtests")
+
+                # Try combining top strategies
+                if not self._stop_requested:
+                    self._try_combinations(engine, asset_ids)
+
+                await event_bus.emit("research.completed", "research",
+                                    tested=self._strategies_tested,
+                                    shortlisted=self._strategies_shortlisted,
+                                    backtests=self._backtests_run)
+                logger.info(f"Research cycle complete: {self._strategies_tested} strategies, {self._strategies_shortlisted} shortlisted")
+
+                if self._stop_requested:
+                    self._status = ResearchStatus.STOPPED
+                    self._completed_at = time.monotonic()
+                    return
+
+                if settings.run_mode == RunMode.LOCAL:
+                    self._status = ResearchStatus.COMPLETED
+                    self._completed_at = time.monotonic()
+                    return
+
+                logger.info(f"Server mode: sleeping {settings.research_interval_minutes} minutes before next research cycle")
+                self._current_work = "sleeping_between_cycles"
+                await asyncio.sleep(settings.research_interval_minutes * 60)
 
         except Exception as e:
             self._status = ResearchStatus.FAILED
@@ -157,7 +215,87 @@ class ResearchEngine:
             logger.error(f"Research failed: {e}")
             self._errors.append({"error": str(e), "fatal": True})
 
-    def _ensure_strategy(self, base_name: str, params: dict, full_name: str) -> int:
+    def _enrich_winner(self, strategy_id: int, asset_ids: list, strat_name: str, params: dict) -> None:
+        try:
+            with get_db() as db:
+                first_asset = asset_ids[0][0] if asset_ids else None
+                if not first_asset:
+                    return
+                rows = db.query(OHLCVORM).filter(
+                    OHLCVORM.asset_id == first_asset
+                ).order_by(OHLCVORM.date.asc()).all()
+
+            if len(rows) < 20:
+                return
+            prices = [r.close for r in rows]
+
+            ps = calculate_position_size(prices, 100000.0)
+            sl = calculate_optimal_sl(prices)
+
+            # Generate pine script
+            pine_type_map = {
+                "sma_crossover": "sma_crossover",
+                "rsi_reversal": "rsi",
+                "macd_signal": "macd",
+                "bollinger_breakout": "bollinger",
+                "mean_reversion": "mean_reversion",
+            }
+            pine_type = pine_type_map.get(strat_name, "sma_crossover")
+            pine = export_to_pine(strat_name, params, pine_type)
+
+            with get_db() as db:
+                s = db.query(StrategyORM).filter(StrategyORM.id == strategy_id).first()
+                if s:
+                    s.optimal_position_size = float(ps["position_size"])
+                    s.optimal_stop_loss = sl["sl_pct"]
+                    s.pine_script = pine
+                    db.flush()
+
+            activity_log.log_action("enriched", strat_name, f"pos_size={ps['position_size']}, sl={sl['sl_pct']}")
+        except Exception as e:
+            logger.warning(f"Failed to enrich winner {strat_name}: {e}")
+
+    def _try_combinations(self, engine: BacktestEngine, asset_ids: list) -> None:
+        try:
+            combos = generate_combinations(BUILTIN_STRATEGIES)
+            if not combos or not asset_ids:
+                return
+
+            first_asset = asset_ids[0][0]
+            with get_db() as db:
+                rows = db.query(OHLCVORM).filter(
+                    OHLCVORM.asset_id == first_asset
+                ).order_by(OHLCVORM.date.asc()).all()
+
+            if len(rows) < 60:
+                return
+            prices = [r.close for r in rows]
+            dates = [r.date for r in rows]
+
+            for name_a, name_b in combos[:3]:
+                try:
+                    sig_a = BUILTIN_STRATEGIES[name_a](prices)
+                    sig_b = BUILTIN_STRATEGIES[name_b](prices)
+                    combined = combine_strategies(sig_a, sig_b)
+
+                    result = engine.run_signal_backtest(
+                        prices=prices[:len(combined.entries)],
+                        dates=dates[:len(combined.entries)],
+                        entries=combined.entries,
+                        exits=combined.exits,
+                    )
+
+                    if result.total_trades > 0 and result.net_profit > 0:
+                        combo_name = f"combo_{name_a}_{name_b}"
+                        self._ensure_strategy(combo_name, {"a": name_a, "b": name_b}, combo_name)
+                        activity_log.log_action("combination_tested", combo_name,
+                                                f"trades={result.total_trades}, pnl={result.net_profit}")
+                except Exception as e:
+                    logger.warning(f"Combo {name_a}+{name_b} failed: {e}")
+        except Exception as e:
+            logger.warning(f"Combination testing failed: {e}")
+
+    def _ensure_strategy(self, base_name: str, params: dict, full_name: str, source: str = "research_engine") -> int:
         with get_db() as db:
             existing = db.query(StrategyORM).filter(StrategyORM.name == full_name).first()
             if existing:
@@ -166,7 +304,7 @@ class ResearchEngine:
             strategy = StrategyORM(
                 name=full_name,
                 description=f"Auto-discovered {base_name} strategy",
-                source="research_engine",
+                source=source,
                 version="1.0",
                 parameters=json.dumps(params),
                 status=StrategyStatus.BACKTESTING.value,
