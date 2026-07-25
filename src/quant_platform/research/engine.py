@@ -22,7 +22,7 @@ from .strategies import BUILTIN_STRATEGIES, PARAMETER_GRID, SignalResult
 from .position_sizing import calculate_position_size
 from .stop_loss import calculate_optimal_sl
 from .regime import classify_regime
-from .combination import combine_strategies, generate_combinations
+from .combination import combine_strategies, generate_combinations, BestOfBestFinder, combine_three
 from .pine_export import export_to_pine
 from .activity_log import activity_log
 
@@ -265,9 +265,9 @@ class ResearchEngine:
             logger.warning(f"Failed to enrich winner {strat_name}: {e}")
 
     def _try_combinations(self, engine: BacktestEngine, asset_ids: list) -> None:
+        """Find best-of-best by combining all winning strategies (2-way and 3-way)."""
         try:
-            combos = generate_combinations(BUILTIN_STRATEGIES)
-            if not combos or not asset_ids:
+            if not asset_ids:
                 return
 
             first_asset = asset_ids[0][0]
@@ -281,26 +281,75 @@ class ResearchEngine:
             prices = [r.close for r in rows]
             dates = [r.date for r in rows]
 
-            for name_a, name_b in combos[:3]:
-                try:
-                    sig_a = BUILTIN_STRATEGIES[name_a](prices)
-                    sig_b = BUILTIN_STRATEGIES[name_b](prices)
-                    combined = combine_strategies(sig_a, sig_b)
+            winners = {}
+            with get_db() as db:
+                scored = db.query(StrategyORM).filter(
+                    StrategyORM.status.in_(["scored", "shortlisted", "paper_trading", "promoted"])
+                ).all()
+                for s in scored:
+                    base_name = s.name.split("_")[0] if "_" in s.name else s.name
+                    if base_name in BUILTIN_STRATEGIES:
+                        try:
+                            params = json.loads(s.parameters) if s.parameters else {}
+                        except (json.JSONDecodeError, TypeError):
+                            params = {}
+                        winners[s.name] = {
+                            "params": params,
+                            "win_rate": s.win_rate or 0,
+                            "sharpe": s.sharpe_ratio or 0,
+                            "base_name": base_name,
+                        }
 
-                    result = engine.run_signal_backtest(
-                        prices=prices[:len(combined.entries)],
-                        dates=dates[:len(combined.entries)],
-                        entries=combined.entries,
-                        exits=combined.exits,
-                    )
+            if len(winners) < 2:
+                all_combos = generate_combinations(BUILTIN_STRATEGIES, max_ways=2)
+                for name_a, name_b in all_combos:
+                    try:
+                        sig_a = BUILTIN_STRATEGIES[name_a](prices)
+                        sig_b = BUILTIN_STRATEGIES[name_b](prices)
+                        for mode in ("and", "or"):
+                            combined = combine_strategies(sig_a, sig_b, mode=mode)
+                            result = engine.run_signal_backtest(
+                                prices=prices[:len(combined.entries)],
+                                dates=dates[:len(combined.entries)],
+                                entries=combined.entries, exits=combined.exits,
+                            )
+                            if result.total_trades > 0 and result.net_profit > 0:
+                                combo_name = f"combo_{name_a}_{name_b}_{mode}"
+                                self._ensure_strategy(combo_name, {"a": name_a, "b": name_b, "mode": mode}, combo_name)
+                                activity_log.log_action("combination_tested", combo_name,
+                                    f"trades={result.total_trades}, pnl={result.net_profit:.2f}, wr={result.win_rate:.2%}")
+                    except Exception as e:
+                        logger.debug(f"Combo {name_a}+{name_b} failed: {e}")
+                return
 
-                    if result.total_trades > 0 and result.net_profit > 0:
-                        combo_name = f"combo_{name_a}_{name_b}"
-                        self._ensure_strategy(combo_name, {"a": name_a, "b": name_b}, combo_name)
-                        activity_log.log_action("combination_tested", combo_name,
-                                                f"trades={result.total_trades}, pnl={result.net_profit}")
-                except Exception as e:
-                    logger.warning(f"Combo {name_a}+{name_b} failed: {e}")
+            func_map = {}
+            for name, info in winners.items():
+                base = info["base_name"]
+                if base in BUILTIN_STRATEGIES:
+                    func_map[name] = lambda p, _b=base, _pr=info["params"]: BUILTIN_STRATEGIES[_b](p, **_pr)
+
+            finder = BestOfBestFinder(engine)
+            best = finder.find_best(
+                winners=winners, prices=prices, dates=dates,
+                strategy_funcs=func_map, top_n=10, include_triples=True,
+            )
+
+            for combo in best:
+                combo_name = f"best_{combo['name']}"
+                params = {"components": combo["components"], "mode": combo["mode"],
+                          "win_rate": combo["win_rate"], "sharpe": combo["sharpe"],
+                          "beats_all": combo.get("beats_all_components", False)}
+                self._ensure_strategy(combo_name, params, combo_name, source="combination_engine")
+                activity_log.log_action(
+                    "best_of_best_found", combo_name,
+                    f"wr={combo['win_rate']:.2%}, sharpe={combo['sharpe']:.2f}, "
+                    f"trades={combo['total_trades']}, beats_all={combo.get('beats_all_components')}",
+                    reasoning=f"Score {combo['score']:.1f}/100, components: {combo['components']}",
+                )
+
+            if best:
+                logger.info(f"Best-of-best: {best[0]['name']} (wr={best[0]['win_rate']:.2%}, score={best[0]['score']:.1f})")
+
         except Exception as e:
             logger.warning(f"Combination testing failed: {e}")
 
