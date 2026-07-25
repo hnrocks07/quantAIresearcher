@@ -1,0 +1,17 @@
+{
+  "entry_id": "7cbdf2947bdd",
+  "phase_id": "DRY_RUN",
+  "task_id": "3fb1069ab540",
+  "category": "review_insight",
+  "title": "Review insights from: Design: Plan phase: Synthetic Dry-Run Validation",
+  "content": "[DRY-RUN] Patterns from review findings",
+  "tags": [
+    "review",
+    "quality",
+    "DRY_RUN"
+  ],
+  "source_agent": "KnowledgeLearningAgent",
+  "created_at": "2026-07-25T12:29:11.470219+00:00",
+  "retrieval_count": 0,
+  "last_retrieved": ""
+}

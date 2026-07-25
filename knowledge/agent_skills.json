@@ -1,0 +1,799 @@
+{
+  "agents": {
+    "SeniorEngineerAgent": {
+      "skills": {
+        "review_lesson_testing": {
+          "current_level": "remediation applied, pattern learned",
+          "history": [
+            {
+              "improvement_id": "a9b2efd0f62f",
+              "before": "issue detected by ReviewerAgent",
+              "after": "remediation applied, pattern learned",
+              "reason": "[DRY-RUN] Additional edge-case tests needed for Design: Plan phase: Synthetic Dry-Run Validation",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-19T16:23:20.146149+00:00"
+            },
+            {
+              "improvement_id": "3ef4358d605b",
+              "before": "issue detected by ReviewerAgent",
+              "after": "remediation applied, pattern learned",
+              "reason": "[DRY-RUN] Additional edge-case tests needed for Design: Plan phase: Synthetic Dry-Run Validation",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-19T16:23:20.146707+00:00"
+            },
+            {
+              "improvement_id": "7d4ce5d78c99",
+              "before": "issue detected by ReviewerAgent",
+              "after": "remediation applied, pattern learned",
+              "reason": "[DRY-RUN] Additional edge-case tests needed for Implement: Plan phase: Synthetic Dry-Run Validation",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-19T16:23:20.155283+00:00"
+            },
+            {
+              "improvement_id": "02fc119084cf",
+              "before": "issue detected by ReviewerAgent",
+              "after": "remediation applied, pattern learned",
+              "reason": "[DRY-RUN] Additional edge-case tests needed for Implement: Plan phase: Synthetic Dry-Run Validation",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-19T16:23:20.155959+00:00"
+            },
+            {
+              "improvement_id": "705e5817d2b1",
+              "before": "issue detected by ReviewerAgent",
+              "after": "remediation applied, pattern learned",
+              "reason": "[DRY-RUN] Additional edge-case tests needed for Test: Plan phase: Synthetic Dry-Run Validation",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-19T16:23:20.167970+00:00"
+            },
+            {
+              "improvement_id": "0e0b061658aa",
+              "before": "issue detected by ReviewerAgent",
+              "after": "remediation applied, pattern learned",
+              "reason": "[DRY-RUN] Additional edge-case tests needed for Test: Plan phase: Synthetic Dry-Run Validation",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-19T16:23:20.168898+00:00"
+            },
+            {
+              "improvement_id": "4bc65df6feee",
+              "before": "issue detected by ReviewerAgent",
+              "after": "remediation applied, pattern learned",
+              "reason": "[DRY-RUN] Additional edge-case tests needed for Design: Plan phase: Synthetic Dry-Run Validation",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-25T12:29:11.466768+00:00"
+            },
+            {
+              "improvement_id": "b8eb72f5b9d4",
+              "before": "issue detected by ReviewerAgent",
+              "after": "remediation applied, pattern learned",
+              "reason": "[DRY-RUN] Additional edge-case tests needed for Design: Plan phase: Synthetic Dry-Run Validation",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-25T12:29:11.467893+00:00"
+            },
+            {
+              "improvement_id": "8696935962d3",
+              "before": "issue detected by ReviewerAgent",
+              "after": "remediation applied, pattern learned",
+              "reason": "[DRY-RUN] Additional edge-case tests needed for Implement: Plan phase: Synthetic Dry-Run Validation",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-25T12:29:11.485177+00:00"
+            },
+            {
+              "improvement_id": "860505038fc5",
+              "before": "issue detected by ReviewerAgent",
+              "after": "remediation applied, pattern learned",
+              "reason": "[DRY-RUN] Additional edge-case tests needed for Implement: Plan phase: Synthetic Dry-Run Validation",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-25T12:29:11.485885+00:00"
+            },
+            {
+              "improvement_id": "6ab279a26254",
+              "before": "issue detected by ReviewerAgent",
+              "after": "remediation applied, pattern learned",
+              "reason": "[DRY-RUN] Additional edge-case tests needed for Test: Plan phase: Synthetic Dry-Run Validation",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-25T12:29:11.506298+00:00"
+            },
+            {
+              "improvement_id": "7ff1b940e5c3",
+              "before": "issue detected by ReviewerAgent",
+              "after": "remediation applied, pattern learned",
+              "reason": "[DRY-RUN] Additional edge-case tests needed for Test: Plan phase: Synthetic Dry-Run Validation",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-25T12:29:11.507097+00:00"
+            },
+            {
+              "improvement_id": "532b034abe34",
+              "before": "issue detected by ReviewerAgent",
+              "after": "remediation applied, pattern learned",
+              "reason": "Validation Script and Tests Not Produced",
+              "phase_id": "0",
+              "timestamp": "2026-07-25T13:02:04.210645+00:00"
+            },
+            {
+              "improvement_id": "aef6f4623298",
+              "before": "issue detected by ReviewerAgent",
+              "after": "remediation applied, pattern learned",
+              "reason": "Tests validate documents written by the same agent \u2014 circular self-validation with no independent grounding",
+              "phase_id": "0",
+              "timestamp": "2026-07-25T13:19:55.367945+00:00"
+            },
+            {
+              "improvement_id": "ebfe91fb3e14",
+              "before": "issue detected by ReviewerAgent",
+              "after": "remediation applied, pattern learned",
+              "reason": "All 20 test results reported as PASSED are unverifiable \u2014 no independent execution evidence",
+              "phase_id": "0",
+              "timestamp": "2026-07-25T13:19:55.369153+00:00"
+            }
+          ],
+          "learned_in_phase": "DRY_RUN",
+          "improvement_count": 15
+        },
+        "review_lesson_documentation": {
+          "current_level": "remediation applied, pattern learned",
+          "history": [
+            {
+              "improvement_id": "a41f49efe7d4",
+              "before": "issue detected by ReviewerAgent",
+              "after": "remediation applied, pattern learned",
+              "reason": "[DRY-RUN] Minor documentation gap",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-19T16:23:20.147098+00:00"
+            },
+            {
+              "improvement_id": "3d0e0f24ab39",
+              "before": "issue detected by ReviewerAgent",
+              "after": "remediation applied, pattern learned",
+              "reason": "[DRY-RUN] Minor documentation gap",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-19T16:23:20.156502+00:00"
+            },
+            {
+              "improvement_id": "708149416f05",
+              "before": "issue detected by ReviewerAgent",
+              "after": "remediation applied, pattern learned",
+              "reason": "[DRY-RUN] Minor documentation gap",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-19T16:23:20.169552+00:00"
+            },
+            {
+              "improvement_id": "57e5e4f5e837",
+              "before": "issue detected by ReviewerAgent",
+              "after": "remediation applied, pattern learned",
+              "reason": "[DRY-RUN] Minor documentation gap",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-25T12:29:11.468519+00:00"
+            },
+            {
+              "improvement_id": "6bbd63cb1b45",
+              "before": "issue detected by ReviewerAgent",
+              "after": "remediation applied, pattern learned",
+              "reason": "[DRY-RUN] Minor documentation gap",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-25T12:29:11.486536+00:00"
+            },
+            {
+              "improvement_id": "120f228e2d7e",
+              "before": "issue detected by ReviewerAgent",
+              "after": "remediation applied, pattern learned",
+              "reason": "[DRY-RUN] Minor documentation gap",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-25T12:29:11.507863+00:00"
+            },
+            {
+              "improvement_id": "da625aa55588",
+              "before": "issue detected by ReviewerAgent",
+              "after": "remediation applied, pattern learned",
+              "reason": "No Technology Decision Document Produced",
+              "phase_id": "0",
+              "timestamp": "2026-07-25T13:02:04.201794+00:00"
+            },
+            {
+              "improvement_id": "2969b7fc02ab",
+              "before": "issue detected by ReviewerAgent",
+              "after": "remediation applied, pattern learned",
+              "reason": "Dependency Compatibility Matrix Not Produced",
+              "phase_id": "0",
+              "timestamp": "2026-07-25T13:02:04.204302+00:00"
+            },
+            {
+              "improvement_id": "d95a52040a20",
+              "before": "issue detected by ReviewerAgent",
+              "after": "remediation applied, pattern learned",
+              "reason": "Local Dev Setup Requirements Not Documented",
+              "phase_id": "0",
+              "timestamp": "2026-07-25T13:02:04.206463+00:00"
+            },
+            {
+              "improvement_id": "9bb4dad32233",
+              "before": "issue detected by ReviewerAgent",
+              "after": "remediation applied, pattern learned",
+              "reason": "Scope Confirmation Document Not Produced",
+              "phase_id": "0",
+              "timestamp": "2026-07-25T13:02:04.208679+00:00"
+            }
+          ],
+          "learned_in_phase": "DRY_RUN",
+          "improvement_count": 10
+        },
+        "knowledge_application": {
+          "current_level": "knowledge applied to current task",
+          "history": [
+            {
+              "improvement_id": "a185e3cf5e8b",
+              "before": "knowledge available but unused",
+              "after": "knowledge applied to current task",
+              "reason": "Reused knowledge entry 0e9b52125656",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-19T16:23:20.160580+00:00"
+            },
+            {
+              "improvement_id": "f8cf9080395d",
+              "before": "knowledge available but unused",
+              "after": "knowledge applied to current task",
+              "reason": "Reused knowledge entry d49b9812b697",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-19T16:23:20.161012+00:00"
+            },
+            {
+              "improvement_id": "c0a5bd823854",
+              "before": "knowledge available but unused",
+              "after": "knowledge applied to current task",
+              "reason": "Reused knowledge entry 140bc117b2e7",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-19T16:23:20.161490+00:00"
+            },
+            {
+              "improvement_id": "f90b3ba70129",
+              "before": "knowledge available but unused",
+              "after": "knowledge applied to current task",
+              "reason": "Reused knowledge entry 0e9b52125656",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-19T16:23:20.173856+00:00"
+            },
+            {
+              "improvement_id": "3a82632f0670",
+              "before": "knowledge available but unused",
+              "after": "knowledge applied to current task",
+              "reason": "Reused knowledge entry d49b9812b697",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-19T16:23:20.174674+00:00"
+            },
+            {
+              "improvement_id": "b44ff8bea79e",
+              "before": "knowledge available but unused",
+              "after": "knowledge applied to current task",
+              "reason": "Reused knowledge entry 140bc117b2e7",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-19T16:23:20.175266+00:00"
+            },
+            {
+              "improvement_id": "7ff5cd3371cf",
+              "before": "knowledge available but unused",
+              "after": "knowledge applied to current task",
+              "reason": "Reused knowledge entry 8f5a81ba4d40",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-19T16:23:20.175887+00:00"
+            },
+            {
+              "improvement_id": "a01aff1b19e5",
+              "before": "knowledge available but unused",
+              "after": "knowledge applied to current task",
+              "reason": "Reused knowledge entry c29fe9acb866",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-19T16:23:20.176538+00:00"
+            },
+            {
+              "improvement_id": "5cad92e22c64",
+              "before": "knowledge available but unused",
+              "after": "knowledge applied to current task",
+              "reason": "Reused knowledge entry a54f671c3858",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-19T16:23:20.177103+00:00"
+            },
+            {
+              "improvement_id": "dcc530cd81ff",
+              "before": "knowledge available but unused",
+              "after": "knowledge applied to current task",
+              "reason": "Reused knowledge entry 0e9b52125656",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-25T12:29:11.473045+00:00"
+            },
+            {
+              "improvement_id": "263ed97f8983",
+              "before": "knowledge available but unused",
+              "after": "knowledge applied to current task",
+              "reason": "Reused knowledge entry d49b9812b697",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-25T12:29:11.473679+00:00"
+            },
+            {
+              "improvement_id": "a75239841c35",
+              "before": "knowledge available but unused",
+              "after": "knowledge applied to current task",
+              "reason": "Reused knowledge entry 140bc117b2e7",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-25T12:29:11.474311+00:00"
+            },
+            {
+              "improvement_id": "6509fed30ad3",
+              "before": "knowledge available but unused",
+              "after": "knowledge applied to current task",
+              "reason": "Reused knowledge entry 8f5a81ba4d40",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-25T12:29:11.474945+00:00"
+            },
+            {
+              "improvement_id": "71e6b0c42dd2",
+              "before": "knowledge available but unused",
+              "after": "knowledge applied to current task",
+              "reason": "Reused knowledge entry c29fe9acb866",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-25T12:29:11.475573+00:00"
+            },
+            {
+              "improvement_id": "fa042a35fef8",
+              "before": "knowledge available but unused",
+              "after": "knowledge applied to current task",
+              "reason": "Reused knowledge entry a54f671c3858",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-25T12:29:11.476191+00:00"
+            },
+            {
+              "improvement_id": "fec36bc8c2a7",
+              "before": "knowledge available but unused",
+              "after": "knowledge applied to current task",
+              "reason": "Reused knowledge entry b27ccdf4cf6d",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-25T12:29:11.476793+00:00"
+            },
+            {
+              "improvement_id": "c63aa0dc99f3",
+              "before": "knowledge available but unused",
+              "after": "knowledge applied to current task",
+              "reason": "Reused knowledge entry 9c5aeb445e9a",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-25T12:29:11.477396+00:00"
+            },
+            {
+              "improvement_id": "ab8d88c0486e",
+              "before": "knowledge available but unused",
+              "after": "knowledge applied to current task",
+              "reason": "Reused knowledge entry 54c569d4d4ff",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-25T12:29:11.478003+00:00"
+            },
+            {
+              "improvement_id": "dba790099cb9",
+              "before": "knowledge available but unused",
+              "after": "knowledge applied to current task",
+              "reason": "Reused knowledge entry 0e9b52125656",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-25T12:29:11.490876+00:00"
+            },
+            {
+              "improvement_id": "525cfe0a9b95",
+              "before": "knowledge available but unused",
+              "after": "knowledge applied to current task",
+              "reason": "Reused knowledge entry d49b9812b697",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-25T12:29:11.491560+00:00"
+            },
+            {
+              "improvement_id": "47587b7a34b5",
+              "before": "knowledge available but unused",
+              "after": "knowledge applied to current task",
+              "reason": "Reused knowledge entry 140bc117b2e7",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-25T12:29:11.492285+00:00"
+            },
+            {
+              "improvement_id": "205092509f8b",
+              "before": "knowledge available but unused",
+              "after": "knowledge applied to current task",
+              "reason": "Reused knowledge entry 8f5a81ba4d40",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-25T12:29:11.492976+00:00"
+            },
+            {
+              "improvement_id": "ba667b27b194",
+              "before": "knowledge available but unused",
+              "after": "knowledge applied to current task",
+              "reason": "Reused knowledge entry c29fe9acb866",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-25T12:29:11.493655+00:00"
+            },
+            {
+              "improvement_id": "b2fed21db393",
+              "before": "knowledge available but unused",
+              "after": "knowledge applied to current task",
+              "reason": "Reused knowledge entry a54f671c3858",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-25T12:29:11.494367+00:00"
+            },
+            {
+              "improvement_id": "f3f51da31647",
+              "before": "knowledge available but unused",
+              "after": "knowledge applied to current task",
+              "reason": "Reused knowledge entry b27ccdf4cf6d",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-25T12:29:11.495086+00:00"
+            },
+            {
+              "improvement_id": "5397fe958101",
+              "before": "knowledge available but unused",
+              "after": "knowledge applied to current task",
+              "reason": "Reused knowledge entry 9c5aeb445e9a",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-25T12:29:11.495791+00:00"
+            },
+            {
+              "improvement_id": "e78f40825785",
+              "before": "knowledge available but unused",
+              "after": "knowledge applied to current task",
+              "reason": "Reused knowledge entry 54c569d4d4ff",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-25T12:29:11.496509+00:00"
+            },
+            {
+              "improvement_id": "000afdb7c473",
+              "before": "knowledge available but unused",
+              "after": "knowledge applied to current task",
+              "reason": "Reused knowledge entry 35455b86b015",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-25T12:29:11.497264+00:00"
+            },
+            {
+              "improvement_id": "9c7815a9f28d",
+              "before": "knowledge available but unused",
+              "after": "knowledge applied to current task",
+              "reason": "Reused knowledge entry 888a123aa5f1",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-25T12:29:11.497992+00:00"
+            },
+            {
+              "improvement_id": "8057890e7e94",
+              "before": "knowledge available but unused",
+              "after": "knowledge applied to current task",
+              "reason": "Reused knowledge entry 7cbdf2947bdd",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-25T12:29:11.498719+00:00"
+            },
+            {
+              "improvement_id": "88ea6e101955",
+              "before": "knowledge available but unused",
+              "after": "knowledge applied to current task",
+              "reason": "Reused knowledge entry 0e9b52125656",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-25T12:29:11.512766+00:00"
+            },
+            {
+              "improvement_id": "3f321708f93d",
+              "before": "knowledge available but unused",
+              "after": "knowledge applied to current task",
+              "reason": "Reused knowledge entry d49b9812b697",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-25T12:29:11.513582+00:00"
+            },
+            {
+              "improvement_id": "babcb6a7aac4",
+              "before": "knowledge available but unused",
+              "after": "knowledge applied to current task",
+              "reason": "Reused knowledge entry 140bc117b2e7",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-25T12:29:11.514414+00:00"
+            },
+            {
+              "improvement_id": "be49298bc87e",
+              "before": "knowledge available but unused",
+              "after": "knowledge applied to current task",
+              "reason": "Reused knowledge entry 8f5a81ba4d40",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-25T12:29:11.515245+00:00"
+            },
+            {
+              "improvement_id": "71e2d985467c",
+              "before": "knowledge available but unused",
+              "after": "knowledge applied to current task",
+              "reason": "Reused knowledge entry c29fe9acb866",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-25T12:29:11.516073+00:00"
+            },
+            {
+              "improvement_id": "3cd6506a215a",
+              "before": "knowledge available but unused",
+              "after": "knowledge applied to current task",
+              "reason": "Reused knowledge entry a54f671c3858",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-25T12:29:11.516957+00:00"
+            },
+            {
+              "improvement_id": "e090627099fc",
+              "before": "knowledge available but unused",
+              "after": "knowledge applied to current task",
+              "reason": "Reused knowledge entry b27ccdf4cf6d",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-25T12:29:11.517792+00:00"
+            },
+            {
+              "improvement_id": "0dc2b17ba6b0",
+              "before": "knowledge available but unused",
+              "after": "knowledge applied to current task",
+              "reason": "Reused knowledge entry 9c5aeb445e9a",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-25T12:29:11.518611+00:00"
+            },
+            {
+              "improvement_id": "2a2f26aec3a5",
+              "before": "knowledge available but unused",
+              "after": "knowledge applied to current task",
+              "reason": "Reused knowledge entry 54c569d4d4ff",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-25T12:29:11.519466+00:00"
+            },
+            {
+              "improvement_id": "c5b2797726f2",
+              "before": "knowledge available but unused",
+              "after": "knowledge applied to current task",
+              "reason": "Reused knowledge entry 35455b86b015",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-25T12:29:11.520343+00:00"
+            },
+            {
+              "improvement_id": "90e32185cd5a",
+              "before": "knowledge available but unused",
+              "after": "knowledge applied to current task",
+              "reason": "Reused knowledge entry 888a123aa5f1",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-25T12:29:11.521235+00:00"
+            },
+            {
+              "improvement_id": "116cc758e9c5",
+              "before": "knowledge available but unused",
+              "after": "knowledge applied to current task",
+              "reason": "Reused knowledge entry 7cbdf2947bdd",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-25T12:29:11.522104+00:00"
+            },
+            {
+              "improvement_id": "403ae27aa27b",
+              "before": "knowledge available but unused",
+              "after": "knowledge applied to current task",
+              "reason": "Reused knowledge entry b1f17a6e4e1f",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-25T12:29:11.523081+00:00"
+            },
+            {
+              "improvement_id": "390d72539ba3",
+              "before": "knowledge available but unused",
+              "after": "knowledge applied to current task",
+              "reason": "Reused knowledge entry 99378c28830e",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-25T12:29:11.524034+00:00"
+            },
+            {
+              "improvement_id": "c8d16b49f462",
+              "before": "knowledge available but unused",
+              "after": "knowledge applied to current task",
+              "reason": "Reused knowledge entry 2837e7b37a84",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-25T12:29:11.525008+00:00"
+            }
+          ],
+          "learned_in_phase": "DRY_RUN",
+          "improvement_count": 45
+        },
+        "review_lesson_correctness": {
+          "current_level": "remediation applied, pattern learned",
+          "history": [
+            {
+              "improvement_id": "c0121238c4f9",
+              "before": "issue detected by ReviewerAgent",
+              "after": "remediation applied, pattern learned",
+              "reason": "Agent Output Truncated - JSON Parse Error Caused Incomplete Delivery",
+              "phase_id": "0",
+              "timestamp": "2026-07-25T13:02:04.196313+00:00"
+            },
+            {
+              "improvement_id": "c3e14fd6d586",
+              "before": "issue detected by ReviewerAgent",
+              "after": "remediation applied, pattern learned",
+              "reason": "Local-First Offline Compatibility Not Verified for Any Technology",
+              "phase_id": "0",
+              "timestamp": "2026-07-25T13:02:04.212525+00:00"
+            },
+            {
+              "improvement_id": "79c4da08983d",
+              "before": "issue detected by ReviewerAgent",
+              "after": "remediation applied, pattern learned",
+              "reason": "Source files PROJECT_CONTEXT.md and ROADMAP.md never read \u2014 audit is based entirely on assumptions",
+              "phase_id": "0",
+              "timestamp": "2026-07-25T13:19:55.364264+00:00"
+            },
+            {
+              "improvement_id": "9f1c4c28fce2",
+              "before": "issue detected by ReviewerAgent",
+              "after": "remediation applied, pattern learned",
+              "reason": "Document header timestamp '2025-01-01' contradicts agent metadata timestamp '2026-07-25'",
+              "phase_id": "0",
+              "timestamp": "2026-07-25T13:19:55.366715+00:00"
+            }
+          ],
+          "learned_in_phase": "0",
+          "improvement_count": 4
+        }
+      },
+      "improvement_count": 74
+    },
+    "KnowledgeLearningAgent": {
+      "skills": {
+        "learned_pattern": {
+          "current_level": "Pattern learned from: Test: Plan phase: Synthetic Dry-Run Validation",
+          "history": [
+            {
+              "improvement_id": "17f335aafcdf",
+              "before": "no knowledge for this pattern",
+              "after": "Pattern learned from: Design: Plan phase: Synthetic Dry-Run Validation",
+              "reason": "KnowledgeLearningAgent captured pattern from task",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-19T16:23:20.149066+00:00"
+            },
+            {
+              "improvement_id": "1ab02c9344c6",
+              "before": "no knowledge for this pattern",
+              "after": "Pattern learned from: Implement: Plan phase: Synthetic Dry-Run Validation",
+              "reason": "KnowledgeLearningAgent captured pattern from task",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-19T16:23:20.159098+00:00"
+            },
+            {
+              "improvement_id": "b232aa49ba78",
+              "before": "no knowledge for this pattern",
+              "after": "Pattern learned from: Test: Plan phase: Synthetic Dry-Run Validation",
+              "reason": "KnowledgeLearningAgent captured pattern from task",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-19T16:23:20.172137+00:00"
+            },
+            {
+              "improvement_id": "58cc4460462e",
+              "before": "no knowledge for this pattern",
+              "after": "Pattern learned from: Design: Plan phase: Synthetic Dry-Run Validation",
+              "reason": "KnowledgeLearningAgent captured pattern from task",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-25T12:29:11.471116+00:00"
+            },
+            {
+              "improvement_id": "67a2088c2b69",
+              "before": "no knowledge for this pattern",
+              "after": "Pattern learned from: Implement: Plan phase: Synthetic Dry-Run Validation",
+              "reason": "KnowledgeLearningAgent captured pattern from task",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-25T12:29:11.488883+00:00"
+            },
+            {
+              "improvement_id": "1a4cfdc48430",
+              "before": "no knowledge for this pattern",
+              "after": "Pattern learned from: Test: Plan phase: Synthetic Dry-Run Validation",
+              "reason": "KnowledgeLearningAgent captured pattern from task",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-25T12:29:11.510334+00:00"
+            }
+          ],
+          "learned_in_phase": "DRY_RUN",
+          "improvement_count": 6
+        },
+        "learned_failure_lesson": {
+          "current_level": "Failure lesson from: Test: Plan phase: Synthetic Dry-Run Validation",
+          "history": [
+            {
+              "improvement_id": "86cdd1700061",
+              "before": "no knowledge for this pattern",
+              "after": "Failure lesson from: Design: Plan phase: Synthetic Dry-Run Validation",
+              "reason": "KnowledgeLearningAgent captured failure_lesson from task",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-19T16:23:20.149477+00:00"
+            },
+            {
+              "improvement_id": "a7916bfda273",
+              "before": "no knowledge for this pattern",
+              "after": "Failure lesson from: Implement: Plan phase: Synthetic Dry-Run Validation",
+              "reason": "KnowledgeLearningAgent captured failure_lesson from task",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-19T16:23:20.159625+00:00"
+            },
+            {
+              "improvement_id": "726a0662fd45",
+              "before": "no knowledge for this pattern",
+              "after": "Failure lesson from: Test: Plan phase: Synthetic Dry-Run Validation",
+              "reason": "KnowledgeLearningAgent captured failure_lesson from task",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-19T16:23:20.172716+00:00"
+            },
+            {
+              "improvement_id": "999306e13bb3",
+              "before": "no knowledge for this pattern",
+              "after": "Failure lesson from: Design: Plan phase: Synthetic Dry-Run Validation",
+              "reason": "KnowledgeLearningAgent captured failure_lesson from task",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-25T12:29:11.471758+00:00"
+            },
+            {
+              "improvement_id": "3666edf9e914",
+              "before": "no knowledge for this pattern",
+              "after": "Failure lesson from: Implement: Plan phase: Synthetic Dry-Run Validation",
+              "reason": "KnowledgeLearningAgent captured failure_lesson from task",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-25T12:29:11.489549+00:00"
+            },
+            {
+              "improvement_id": "e091dfdf779f",
+              "before": "no knowledge for this pattern",
+              "after": "Failure lesson from: Test: Plan phase: Synthetic Dry-Run Validation",
+              "reason": "KnowledgeLearningAgent captured failure_lesson from task",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-25T12:29:11.511179+00:00"
+            }
+          ],
+          "learned_in_phase": "DRY_RUN",
+          "improvement_count": 6
+        },
+        "learned_review_insight": {
+          "current_level": "Review insights from: Test: Plan phase: Synthetic Dry-Run Validation",
+          "history": [
+            {
+              "improvement_id": "da496d39563a",
+              "before": "no knowledge for this pattern",
+              "after": "Review insights from: Design: Plan phase: Synthetic Dry-Run Validation",
+              "reason": "KnowledgeLearningAgent captured review_insight from task",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-19T16:23:20.149917+00:00"
+            },
+            {
+              "improvement_id": "e322d3ef0229",
+              "before": "no knowledge for this pattern",
+              "after": "Review insights from: Implement: Plan phase: Synthetic Dry-Run Validation",
+              "reason": "KnowledgeLearningAgent captured review_insight from task",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-19T16:23:20.160105+00:00"
+            },
+            {
+              "improvement_id": "f229706e01d0",
+              "before": "no knowledge for this pattern",
+              "after": "Review insights from: Test: Plan phase: Synthetic Dry-Run Validation",
+              "reason": "KnowledgeLearningAgent captured review_insight from task",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-19T16:23:20.173287+00:00"
+            },
+            {
+              "improvement_id": "c10e5a28a789",
+              "before": "no knowledge for this pattern",
+              "after": "Review insights from: Design: Plan phase: Synthetic Dry-Run Validation",
+              "reason": "KnowledgeLearningAgent captured review_insight from task",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-25T12:29:11.472394+00:00"
+            },
+            {
+              "improvement_id": "991c4465fbdb",
+              "before": "no knowledge for this pattern",
+              "after": "Review insights from: Implement: Plan phase: Synthetic Dry-Run Validation",
+              "reason": "KnowledgeLearningAgent captured review_insight from task",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-25T12:29:11.490220+00:00"
+            },
+            {
+              "improvement_id": "61ce1f9baf2b",
+              "before": "no knowledge for this pattern",
+              "after": "Review insights from: Test: Plan phase: Synthetic Dry-Run Validation",
+              "reason": "KnowledgeLearningAgent captured review_insight from task",
+              "phase_id": "DRY_RUN",
+              "timestamp": "2026-07-25T12:29:11.511970+00:00"
+            }
+          ],
+          "learned_in_phase": "DRY_RUN",
+          "improvement_count": 6
+        }
+      },
+      "improvement_count": 18
+    }
+  }
+}

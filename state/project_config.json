@@ -1,0 +1,9 @@
+{
+  "model": "claude",
+  "max_concurrent_llm_agents": 2,
+  "real_money_trading": false,
+  "advanced_charting": "FUTURE",
+  "agent_team_proof": true,
+  "evidence_phase": "0A",
+  "tracked_model_telemetry": "capture_if_available_never_fabricate"
+}

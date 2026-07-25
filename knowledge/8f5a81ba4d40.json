@@ -1,0 +1,16 @@
+{
+  "entry_id": "8f5a81ba4d40",
+  "phase_id": "DRY_RUN",
+  "task_id": "5d428e652484",
+  "category": "pattern",
+  "title": "Pattern learned from: Implement: Plan phase: Synthetic Dry-Run Validation",
+  "content": "[DRY-RUN] Captured implementation pattern",
+  "tags": [
+    "dry-run",
+    "DRY_RUN"
+  ],
+  "source_agent": "KnowledgeLearningAgent",
+  "created_at": "2026-07-19T16:23:20.157199+00:00",
+  "retrieval_count": 0,
+  "last_retrieved": ""
+}

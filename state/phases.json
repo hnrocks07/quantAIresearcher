@@ -1,0 +1,30 @@
+{
+  "phase": "BOOTSTRAP",
+  "status": "NOT_STARTED",
+  "phases": {
+    "DRY_RUN": {
+      "phase_id": "DRY_RUN",
+      "name": "Synthetic Dry-Run Validation",
+      "status": "COMPLETED",
+      "dependencies": [],
+      "tasks": [],
+      "run_id": "run_b1ec40f8849c",
+      "started_at": "2026-07-25T12:29:11.456244+00:00",
+      "completed_at": "2026-07-25T12:29:11.529014+00:00",
+      "acceptance_outcome": "ACCEPTED"
+    },
+    "0": {
+      "phase_id": "0",
+      "name": "Greenfield Architecture & Local Foundation Design",
+      "status": "IN_PROGRESS",
+      "dependencies": [
+        "0A"
+      ],
+      "tasks": [],
+      "run_id": "run_b9d07af3c82d",
+      "started_at": "2026-07-25T13:10:51.351734+00:00",
+      "completed_at": "",
+      "acceptance_outcome": ""
+    }
+  }
+}

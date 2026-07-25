@@ -1,0 +1,44 @@
+{
+  "phases": {
+    "DRY_RUN": {
+      "phase_id": "DRY_RUN",
+      "run_id": "run_b1ec40f8849c",
+      "task_count": 8,
+      "tasks_completed": 8,
+      "tasks_failed": 0,
+      "total_duration_seconds": 0.0,
+      "remediation_cycles": 6,
+      "findings_count": 0,
+      "findings_blocker": 0,
+      "findings_high": 0,
+      "knowledge_entries_created": 0,
+      "knowledge_reuse_count": 36,
+      "human_intervention_count": 0,
+      "agent_decision_count": 6,
+      "test_pass_count": 0,
+      "test_fail_count": 0,
+      "metric_type": "DERIVED",
+      "computed_at": "2026-07-25T12:29:11.530168+00:00"
+    },
+    "0": {
+      "phase_id": "0",
+      "run_id": "run_b1ec40f8849c",
+      "task_count": 1,
+      "tasks_completed": 1,
+      "tasks_failed": 0,
+      "total_duration_seconds": 0.0,
+      "remediation_cycles": 0,
+      "findings_count": 0,
+      "findings_blocker": 0,
+      "findings_high": 0,
+      "knowledge_entries_created": 0,
+      "knowledge_reuse_count": 0,
+      "human_intervention_count": 0,
+      "agent_decision_count": 0,
+      "test_pass_count": 0,
+      "test_fail_count": 0,
+      "metric_type": "DERIVED",
+      "computed_at": "2026-07-25T12:51:29.140054+00:00"
+    }
+  }
+}

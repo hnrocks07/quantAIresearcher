@@ -1,0 +1,304 @@
+{
+  "entries": {
+    "0e9b52125656": {
+      "entry_id": "0e9b52125656",
+      "phase_id": "DRY_RUN",
+      "task_id": "5ff0658e32d3",
+      "category": "pattern",
+      "title": "Pattern learned from: Design: Plan phase: Synthetic Dry-Run Validation",
+      "content": "[DRY-RUN] Captured implementation pattern",
+      "tags": [
+        "dry-run",
+        "DRY_RUN"
+      ],
+      "source_agent": "KnowledgeLearningAgent",
+      "created_at": "2026-07-19T16:23:20.147714+00:00",
+      "retrieval_count": 6,
+      "last_retrieved": "2026-07-25T12:29:11.502015+00:00"
+    },
+    "d49b9812b697": {
+      "entry_id": "d49b9812b697",
+      "phase_id": "DRY_RUN",
+      "task_id": "5ff0658e32d3",
+      "category": "failure_lesson",
+      "title": "Failure lesson from: Design: Plan phase: Synthetic Dry-Run Validation",
+      "content": "[DRY-RUN] What failed, why, and how it was fixed",
+      "tags": [
+        "failure",
+        "lesson",
+        "DRY_RUN"
+      ],
+      "source_agent": "KnowledgeLearningAgent",
+      "created_at": "2026-07-19T16:23:20.148098+00:00",
+      "retrieval_count": 6,
+      "last_retrieved": "2026-07-25T12:29:11.502025+00:00"
+    },
+    "140bc117b2e7": {
+      "entry_id": "140bc117b2e7",
+      "phase_id": "DRY_RUN",
+      "task_id": "5ff0658e32d3",
+      "category": "review_insight",
+      "title": "Review insights from: Design: Plan phase: Synthetic Dry-Run Validation",
+      "content": "[DRY-RUN] Patterns from review findings",
+      "tags": [
+        "review",
+        "quality",
+        "DRY_RUN"
+      ],
+      "source_agent": "KnowledgeLearningAgent",
+      "created_at": "2026-07-19T16:23:20.148495+00:00",
+      "retrieval_count": 6,
+      "last_retrieved": "2026-07-25T12:29:11.502032+00:00"
+    },
+    "8f5a81ba4d40": {
+      "entry_id": "8f5a81ba4d40",
+      "phase_id": "DRY_RUN",
+      "task_id": "5d428e652484",
+      "category": "pattern",
+      "title": "Pattern learned from: Implement: Plan phase: Synthetic Dry-Run Validation",
+      "content": "[DRY-RUN] Captured implementation pattern",
+      "tags": [
+        "dry-run",
+        "DRY_RUN"
+      ],
+      "source_agent": "KnowledgeLearningAgent",
+      "created_at": "2026-07-19T16:23:20.157199+00:00",
+      "retrieval_count": 5,
+      "last_retrieved": "2026-07-25T12:29:11.502039+00:00"
+    },
+    "c29fe9acb866": {
+      "entry_id": "c29fe9acb866",
+      "phase_id": "DRY_RUN",
+      "task_id": "5d428e652484",
+      "category": "failure_lesson",
+      "title": "Failure lesson from: Implement: Plan phase: Synthetic Dry-Run Validation",
+      "content": "[DRY-RUN] What failed, why, and how it was fixed",
+      "tags": [
+        "failure",
+        "lesson",
+        "DRY_RUN"
+      ],
+      "source_agent": "KnowledgeLearningAgent",
+      "created_at": "2026-07-19T16:23:20.157782+00:00",
+      "retrieval_count": 5,
+      "last_retrieved": "2026-07-25T12:29:11.502046+00:00"
+    },
+    "a54f671c3858": {
+      "entry_id": "a54f671c3858",
+      "phase_id": "DRY_RUN",
+      "task_id": "5d428e652484",
+      "category": "review_insight",
+      "title": "Review insights from: Implement: Plan phase: Synthetic Dry-Run Validation",
+      "content": "[DRY-RUN] Patterns from review findings",
+      "tags": [
+        "review",
+        "quality",
+        "DRY_RUN"
+      ],
+      "source_agent": "KnowledgeLearningAgent",
+      "created_at": "2026-07-19T16:23:20.158278+00:00",
+      "retrieval_count": 5,
+      "last_retrieved": "2026-07-25T12:29:11.502053+00:00"
+    },
+    "b27ccdf4cf6d": {
+      "entry_id": "b27ccdf4cf6d",
+      "phase_id": "DRY_RUN",
+      "task_id": "5be21ebd4c60",
+      "category": "pattern",
+      "title": "Pattern learned from: Test: Plan phase: Synthetic Dry-Run Validation",
+      "content": "[DRY-RUN] Captured implementation pattern",
+      "tags": [
+        "dry-run",
+        "DRY_RUN"
+      ],
+      "source_agent": "KnowledgeLearningAgent",
+      "created_at": "2026-07-19T16:23:20.170525+00:00",
+      "retrieval_count": 4,
+      "last_retrieved": "2026-07-25T12:29:11.502060+00:00"
+    },
+    "9c5aeb445e9a": {
+      "entry_id": "9c5aeb445e9a",
+      "phase_id": "DRY_RUN",
+      "task_id": "5be21ebd4c60",
+      "category": "failure_lesson",
+      "title": "Failure lesson from: Test: Plan phase: Synthetic Dry-Run Validation",
+      "content": "[DRY-RUN] What failed, why, and how it was fixed",
+      "tags": [
+        "failure",
+        "lesson",
+        "DRY_RUN"
+      ],
+      "source_agent": "KnowledgeLearningAgent",
+      "created_at": "2026-07-19T16:23:20.171026+00:00",
+      "retrieval_count": 4,
+      "last_retrieved": "2026-07-25T12:29:11.502066+00:00"
+    },
+    "54c569d4d4ff": {
+      "entry_id": "54c569d4d4ff",
+      "phase_id": "DRY_RUN",
+      "task_id": "5be21ebd4c60",
+      "category": "review_insight",
+      "title": "Review insights from: Test: Plan phase: Synthetic Dry-Run Validation",
+      "content": "[DRY-RUN] Patterns from review findings",
+      "tags": [
+        "review",
+        "quality",
+        "DRY_RUN"
+      ],
+      "source_agent": "KnowledgeLearningAgent",
+      "created_at": "2026-07-19T16:23:20.171497+00:00",
+      "retrieval_count": 4,
+      "last_retrieved": "2026-07-25T12:29:11.502073+00:00"
+    },
+    "35455b86b015": {
+      "entry_id": "35455b86b015",
+      "phase_id": "DRY_RUN",
+      "task_id": "3fb1069ab540",
+      "category": "pattern",
+      "title": "Pattern learned from: Design: Plan phase: Synthetic Dry-Run Validation",
+      "content": "[DRY-RUN] Captured implementation pattern",
+      "tags": [
+        "dry-run",
+        "DRY_RUN"
+      ],
+      "source_agent": "KnowledgeLearningAgent",
+      "created_at": "2026-07-25T12:29:11.469267+00:00",
+      "retrieval_count": 2,
+      "last_retrieved": "2026-07-25T12:29:11.502080+00:00"
+    },
+    "888a123aa5f1": {
+      "entry_id": "888a123aa5f1",
+      "phase_id": "DRY_RUN",
+      "task_id": "3fb1069ab540",
+      "category": "failure_lesson",
+      "title": "Failure lesson from: Design: Plan phase: Synthetic Dry-Run Validation",
+      "content": "[DRY-RUN] What failed, why, and how it was fixed",
+      "tags": [
+        "failure",
+        "lesson",
+        "DRY_RUN"
+      ],
+      "source_agent": "KnowledgeLearningAgent",
+      "created_at": "2026-07-25T12:29:11.469755+00:00",
+      "retrieval_count": 2,
+      "last_retrieved": "2026-07-25T12:29:11.502087+00:00"
+    },
+    "7cbdf2947bdd": {
+      "entry_id": "7cbdf2947bdd",
+      "phase_id": "DRY_RUN",
+      "task_id": "3fb1069ab540",
+      "category": "review_insight",
+      "title": "Review insights from: Design: Plan phase: Synthetic Dry-Run Validation",
+      "content": "[DRY-RUN] Patterns from review findings",
+      "tags": [
+        "review",
+        "quality",
+        "DRY_RUN"
+      ],
+      "source_agent": "KnowledgeLearningAgent",
+      "created_at": "2026-07-25T12:29:11.470219+00:00",
+      "retrieval_count": 2,
+      "last_retrieved": "2026-07-25T12:29:11.502094+00:00"
+    },
+    "b1f17a6e4e1f": {
+      "entry_id": "b1f17a6e4e1f",
+      "phase_id": "DRY_RUN",
+      "task_id": "0e56711333e4",
+      "category": "pattern",
+      "title": "Pattern learned from: Implement: Plan phase: Synthetic Dry-Run Validation",
+      "content": "[DRY-RUN] Captured implementation pattern",
+      "tags": [
+        "dry-run",
+        "DRY_RUN"
+      ],
+      "source_agent": "KnowledgeLearningAgent",
+      "created_at": "2026-07-25T12:29:11.487399+00:00",
+      "retrieval_count": 1,
+      "last_retrieved": "2026-07-25T12:29:11.502101+00:00"
+    },
+    "99378c28830e": {
+      "entry_id": "99378c28830e",
+      "phase_id": "DRY_RUN",
+      "task_id": "0e56711333e4",
+      "category": "failure_lesson",
+      "title": "Failure lesson from: Implement: Plan phase: Synthetic Dry-Run Validation",
+      "content": "[DRY-RUN] What failed, why, and how it was fixed",
+      "tags": [
+        "failure",
+        "lesson",
+        "DRY_RUN"
+      ],
+      "source_agent": "KnowledgeLearningAgent",
+      "created_at": "2026-07-25T12:29:11.487839+00:00",
+      "retrieval_count": 1,
+      "last_retrieved": "2026-07-25T12:29:11.502107+00:00"
+    },
+    "2837e7b37a84": {
+      "entry_id": "2837e7b37a84",
+      "phase_id": "DRY_RUN",
+      "task_id": "0e56711333e4",
+      "category": "review_insight",
+      "title": "Review insights from: Implement: Plan phase: Synthetic Dry-Run Validation",
+      "content": "[DRY-RUN] Patterns from review findings",
+      "tags": [
+        "review",
+        "quality",
+        "DRY_RUN"
+      ],
+      "source_agent": "KnowledgeLearningAgent",
+      "created_at": "2026-07-25T12:29:11.488264+00:00",
+      "retrieval_count": 1,
+      "last_retrieved": "2026-07-25T12:29:11.502114+00:00"
+    },
+    "8b78d33e2586": {
+      "entry_id": "8b78d33e2586",
+      "phase_id": "DRY_RUN",
+      "task_id": "41a0c1b02b2d",
+      "category": "pattern",
+      "title": "Pattern learned from: Test: Plan phase: Synthetic Dry-Run Validation",
+      "content": "[DRY-RUN] Captured implementation pattern",
+      "tags": [
+        "dry-run",
+        "DRY_RUN"
+      ],
+      "source_agent": "KnowledgeLearningAgent",
+      "created_at": "2026-07-25T12:29:11.508805+00:00",
+      "retrieval_count": 0,
+      "last_retrieved": ""
+    },
+    "cd2586108345": {
+      "entry_id": "cd2586108345",
+      "phase_id": "DRY_RUN",
+      "task_id": "41a0c1b02b2d",
+      "category": "failure_lesson",
+      "title": "Failure lesson from: Test: Plan phase: Synthetic Dry-Run Validation",
+      "content": "[DRY-RUN] What failed, why, and how it was fixed",
+      "tags": [
+        "failure",
+        "lesson",
+        "DRY_RUN"
+      ],
+      "source_agent": "KnowledgeLearningAgent",
+      "created_at": "2026-07-25T12:29:11.509257+00:00",
+      "retrieval_count": 0,
+      "last_retrieved": ""
+    },
+    "2a317fe40ea8": {
+      "entry_id": "2a317fe40ea8",
+      "phase_id": "DRY_RUN",
+      "task_id": "41a0c1b02b2d",
+      "category": "review_insight",
+      "title": "Review insights from: Test: Plan phase: Synthetic Dry-Run Validation",
+      "content": "[DRY-RUN] Patterns from review findings",
+      "tags": [
+        "review",
+        "quality",
+        "DRY_RUN"
+      ],
+      "source_agent": "KnowledgeLearningAgent",
+      "created_at": "2026-07-25T12:29:11.509697+00:00",
+      "retrieval_count": 0,
+      "last_retrieved": ""
+    }
+  }
+}
