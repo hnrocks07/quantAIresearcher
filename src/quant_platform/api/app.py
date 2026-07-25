@@ -430,9 +430,11 @@ async def get_activity_log(limit: int = 100):
 @app.post("/research/tv-discovery/start")
 async def start_tv_discovery(interval_minutes: int = 60):
     from ..research.tradingview_source import TradingViewSource
-    tv = TradingViewSource()
+    from ..config import get_settings
+    s = get_settings()
+    tv = TradingViewSource(username=s.tradingview_username, password=s.tradingview_password)
     asyncio.create_task(tv.run_continuous(interval_minutes))
-    return {"status": "started", "interval_minutes": interval_minutes}
+    return {"status": "started", "interval_minutes": interval_minutes, "authenticated": bool(s.tradingview_username)}
 
 
 @app.post("/research/tv-discovery/stop")

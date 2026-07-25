@@ -114,7 +114,10 @@ class ResearchEngine:
                 # TradingView auto-discovery: pull community strategies + multi-TF signals
                 if source_mode in ("tradingview", "both") and _TV_SOURCE:
                     try:
-                        tv = _TV_SOURCE()
+                        tv = _TV_SOURCE(
+                            username=settings.tradingview_username,
+                            password=settings.tradingview_password,
+                        )
                         await tv.connect()
                         imported = await tv.discover_strategies(limit=50)
                         for imp in imported:

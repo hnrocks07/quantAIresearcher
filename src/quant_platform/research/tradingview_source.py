@@ -110,12 +110,19 @@ def _parse_pine_to_strategy(script_name: str, pine_source: str) -> dict | None:
     return params
 
 
+TV_LOGIN_URL = "https://www.tradingview.com/accounts/signin/"
+TV_SEARCH_SCRIPTS_URL = "https://www.tradingview.com/pubscripts-suggest-json/"
+
+
 class TradingViewSource(ResearchSource):
 
-    def __init__(self):
+    def __init__(self, username: str | None = None, password: str | None = None):
         self._client: httpx.AsyncClient | None = None
         self._discovered: list[ImportedStrategy] = []
         self._running = False
+        self._username = username
+        self._password = password
+        self._authenticated = False
 
     def name(self) -> str:
         return "tradingview"
@@ -123,16 +130,49 @@ class TradingViewSource(ResearchSource):
     async def connect(self) -> None:
         self._client = httpx.AsyncClient(
             timeout=30.0,
+            follow_redirects=True,
             headers={
-                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
-                "Accept": "application/json, text/html",
+                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                "Accept": "application/json, text/html, */*",
+                "Accept-Language": "en-US,en;q=0.9",
+                "Origin": "https://www.tradingview.com",
+                "Referer": "https://www.tradingview.com/",
             },
         )
+        if self._username and self._password:
+            await self._login()
+
+    async def _login(self) -> None:
+        """Authenticate with TradingView to access premium scripts."""
+        if not self._client:
+            return
+        try:
+            resp = await self._client.post(
+                TV_LOGIN_URL,
+                data={"username": self._username, "password": self._password, "remember": "on"},
+                headers={"Content-Type": "application/x-www-form-urlencoded"},
+            )
+            if resp.status_code == 200 and "auth_token" in resp.text.lower():
+                self._authenticated = True
+                logger.info("TradingView login successful — premium scripts accessible")
+            else:
+                try:
+                    data = resp.json()
+                    if data.get("user"):
+                        self._authenticated = True
+                        logger.info("TradingView login successful")
+                    else:
+                        logger.warning(f"TradingView login failed: {data.get('error', 'unknown')}")
+                except Exception:
+                    logger.warning(f"TradingView login returned status {resp.status_code}")
+        except Exception as e:
+            logger.warning(f"TradingView login failed: {e}")
 
     async def disconnect(self) -> None:
         if self._client:
             await self._client.aclose()
             self._client = None
+        self._authenticated = False
 
     async def discover_strategies(self, limit: int = 50) -> list[ImportedStrategy]:
         """Auto-discover strategies from TradingView: community scripts + multi-timeframe TA signals."""
@@ -148,31 +188,61 @@ class TradingViewSource(ResearchSource):
         return results[:limit]
 
     async def _scrape_community_scripts(self, limit: int = 25) -> list[ImportedStrategy]:
-        """Fetch trending community Pine scripts and extract strategy parameters."""
+        """Fetch community Pine scripts — premium scripts accessible when authenticated."""
         strategies = []
         if not self._client:
             return strategies
 
+        search_queries = ["strategy", "swing trading", "intraday", "scalping", "trend following",
+                          "mean reversion", "momentum", "breakout", "RSI strategy", "MACD strategy"]
+
+        for query in search_queries:
+            if len(strategies) >= limit:
+                break
+            try:
+                resp = await self._client.get(
+                    TV_SEARCH_SCRIPTS_URL,
+                    params={"search": query},
+                )
+                if resp.status_code == 200:
+                    data = resp.json()
+                    scripts = data.get("results", data) if isinstance(data, dict) else data if isinstance(data, list) else []
+                    for script in scripts:
+                        if len(strategies) >= limit:
+                            break
+                        script_id = script.get("scriptIdPart", "") if isinstance(script, dict) else ""
+                        if not script_id:
+                            continue
+                        detail = await self._fetch_script_detail(script_id)
+                        if detail:
+                            strategies.append(detail)
+                        await asyncio.sleep(0.3)
+                await asyncio.sleep(0.5)
+            except Exception as e:
+                logger.debug(f"Script search for '{query}' failed: {e}")
+
         try:
             resp = await self._client.get(
                 TRADINGVIEW_SCRIPT_API,
-                params={"filter": "strategy", "sort": "popular", "size": limit},
+                params={"filter": "strategy", "sort": "popular", "size": limit - len(strategies)},
             )
             if resp.status_code == 200:
                 scripts = resp.json() if resp.headers.get("content-type", "").startswith("application/json") else []
-                for script in scripts[:limit]:
-                    try:
-                        detail = await self._fetch_script_detail(script.get("scriptIdPart", ""))
-                        if detail:
-                            strategies.append(detail)
-                            await asyncio.sleep(0.3)
-                    except Exception as e:
-                        logger.debug(f"Script detail fetch failed: {e}")
-            else:
-                logger.info(f"Community scripts API returned {resp.status_code}, falling back to TA scan")
+                for script in scripts:
+                    if len(strategies) >= limit:
+                        break
+                    script_id = script.get("scriptIdPart", "")
+                    if not script_id:
+                        continue
+                    detail = await self._fetch_script_detail(script_id)
+                    if detail:
+                        strategies.append(detail)
+                    await asyncio.sleep(0.3)
         except Exception as e:
-            logger.info(f"Community scripts fetch failed ({e}), will use TA scan only")
+            logger.debug(f"Popular scripts fetch failed: {e}")
 
+        if self._authenticated:
+            logger.info(f"Authenticated session — premium scripts included in {len(strategies)} results")
         return strategies
 
     async def _fetch_script_detail(self, script_id: str) -> ImportedStrategy | None:
