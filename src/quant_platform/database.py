@@ -1,31 +1,71 @@
-"""SQLite database connection and migration management."""
+"""Database engine, session management, and base model."""
 
 from __future__ import annotations
 
-import sqlite3
-from pathlib import Path
+from contextlib import contextmanager
+from typing import Generator
+
+from sqlalchemy import create_engine, event
+from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 from .config import get_settings
 
-MIGRATIONS_DIR = Path(__file__).resolve().parent.parent.parent / "migrations"
+
+class Base(DeclarativeBase):
+    pass
 
 
-def get_connection(db_path: str | None = None) -> sqlite3.Connection:
-    if db_path is None:
+_engine = None
+_session_factory = None
+
+
+def get_engine():
+    global _engine
+    if _engine is None:
         settings = get_settings()
-        db_path = settings.db_url.replace("sqlite:///", "")
-    Path(db_path).parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(db_path)
-    conn.execute("PRAGMA journal_mode=WAL")
-    conn.execute("PRAGMA foreign_keys=ON")
-    conn.row_factory = sqlite3.Row
-    return conn
+        is_sqlite = settings.db_url.startswith("sqlite")
+        kwargs = {"pool_pre_ping": True}
+        if is_sqlite:
+            from sqlalchemy.pool import StaticPool
+            kwargs["poolclass"] = StaticPool
+            kwargs["connect_args"] = {"check_same_thread": False}
+        else:
+            kwargs["pool_size"] = settings.db_pool_size
+            kwargs["max_overflow"] = settings.db_max_overflow
+        _engine = create_engine(settings.db_url, **kwargs)
+        if is_sqlite:
+            @event.listens_for(_engine, "connect")
+            def _set_sqlite_pragma(dbapi_conn, _):
+                cursor = dbapi_conn.cursor()
+                cursor.execute("PRAGMA journal_mode=WAL")
+                cursor.execute("PRAGMA foreign_keys=ON")
+                cursor.close()
+    return _engine
 
 
-def run_migrations(conn: sqlite3.Connection) -> int:
-    applied = 0
-    for sql_file in sorted(MIGRATIONS_DIR.glob("*.sql")):
-        sql = sql_file.read_text()
-        conn.executescript(sql)
-        applied += 1
-    return applied
+def get_session_factory():
+    global _session_factory
+    if _session_factory is None:
+        _session_factory = sessionmaker(bind=get_engine(), expire_on_commit=False)
+    return _session_factory
+
+
+@contextmanager
+def get_db() -> Generator[Session, None, None]:
+    session = get_session_factory()()
+    try:
+        yield session
+        session.commit()
+    except Exception:
+        session.rollback()
+        raise
+    finally:
+        session.close()
+
+
+def reset_engine() -> None:
+    global _engine, _session_factory
+    if _engine is not None:
+        _engine.dispose()
+    _engine = None
+    _session_factory = None
