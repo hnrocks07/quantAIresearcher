@@ -20,7 +20,7 @@ from ..plugins.llm import LLMProvider
 from ..kill_switch import kill_switch
 from ..event_bus import event_bus
 from ..logging import get_logger
-from ..utils import retry_async
+from ..utils import retry_async, snap_to_lot
 from ..research.strategies import BUILTIN_STRATEGIES
 from ..agents.activity_feed import activity_feed
 
@@ -235,11 +235,13 @@ class TradingExecutor:
                 if price <= 0:
                     price = prices[-1]
 
-                # Position sizing from strategy or default
+                # Position sizing — lot-aware for F&O
                 balance = await self._broker.balance()
                 size_pct = strategy.optimal_position_size or settings.position_size_pct
                 position_size = balance["cash"] * size_pct
-                qty = int(position_size / price) if price > 0 else 0
+                lot_size = getattr(asset, "lot_size", 1) or 1
+                raw_qty = int(position_size / price) if price > 0 else 0
+                qty = snap_to_lot(raw_qty, lot_size)
 
                 if qty > 0:
                     result = await retry_async(
@@ -261,6 +263,7 @@ class TradingExecutor:
             # Check all open positions for trailing stop and profit harvest
             positions = await self._broker.positions()
             fee_schedule = self._broker.fee_schedule()
+            lot_size = getattr(asset, "lot_size", 1) or 1
             for pos in positions:
                 if pos.get("symbol") == asset.symbol and pos.get("qty", 0) > 0:
                     quote = await self._broker.quote(asset.symbol)
@@ -289,28 +292,29 @@ class TradingExecutor:
 
                     # Tier 1 — Profit harvest: at 100% NET gain, sell 50% and let rest ride
                     if net_gain_pct >= settings.profit_harvest_threshold:
-                        harvest_qty = max(1, int(qty * settings.profit_harvest_pct))
-                        if not pos.get("_harvested"):
+                        raw_harvest = int(qty * settings.profit_harvest_pct)
+                        harvest_qty = snap_to_lot(raw_harvest, lot_size)
+                        if not pos.get("_harvested") and harvest_qty > 0:
                             sell_qty = harvest_qty
                             sell_reason = f"harvest_{settings.profit_harvest_pct:.0%}_at_{net_gain_pct:.0%}_net_gain"
 
                     # Tier 2 — Trailing stop: only activates after minimum net gain cushion (default 5%)
                     elif net_gain_pct >= settings.trailing_activation_pct:
                         if drop_from_peak >= settings.trailing_stop_pct:
-                            sell_qty = qty
+                            sell_qty = snap_to_lot(qty, lot_size)
                             sell_reason = f"trailing_stop_{drop_from_peak:.1%}_from_peak_net_{net_gain_pct:.1%}"
 
                     # Tier 3 — Below activation: fixed stop-loss from entry (default 2%)
                     elif gross_gain <= -settings.fixed_stop_loss_pct:
-                        sell_qty = qty
+                        sell_qty = snap_to_lot(qty, lot_size)
                         sell_reason = f"fixed_stoploss_{gross_gain:.1%}_below_entry"
 
                     # Strategy exit signal: only if net losing
                     elif signals.exits[-1] and net_profit <= 0:
-                        sell_qty = qty
+                        sell_qty = snap_to_lot(qty, lot_size)
                         scaled = self._scale_position(pos, strategy)
                         if scaled and scaled.get("action") == "reduce":
-                            sell_qty = max(1, int(qty * scaled["scale_factor"]))
+                            sell_qty = snap_to_lot(int(qty * scaled["scale_factor"]), lot_size)
                         sell_reason = "signal_exit_net_losing"
 
                     if sell_qty > 0:

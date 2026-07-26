@@ -682,11 +682,21 @@ async def live_positions():
     fee_schedule = broker.fee_schedule()
     positions = await broker.positions()
     result = []
+    # Pre-load lot sizes for all symbols
+    lot_sizes = {}
+    with get_db() as db:
+        for pos in positions:
+            sym = pos.get("symbol", "")
+            if sym and sym not in lot_sizes:
+                a = db.query(AssetORM).filter(AssetORM.symbol == sym).first()
+                lot_sizes[sym] = (a.lot_size or 1) if a else 1
+
     for pos in positions:
         if pos.get("qty", 0) <= 0:
             continue
         symbol = pos.get("symbol", "")
         qty = pos["qty"]
+        lot_size = lot_sizes.get(symbol, 1)
         entry_price = pos.get("avg_price", pos.get("entry_price", 0))
         quote = await broker.quote(symbol)
         current_price = quote.get("last", entry_price)
@@ -713,6 +723,8 @@ async def live_positions():
             "sell_fees": round(sell_fees, 2),
             "net_pnl": round(net_pnl, 2),
             "net_pct": round(net_pct * 100, 2),
+            "lot_size": lot_size,
+            "is_fno": lot_size > 1,
         })
     return {"positions": result, "count": len(result)}
 
@@ -747,13 +759,23 @@ async def book_profit(payload: dict):
     quote = await broker.quote(symbol)
     price = quote.get("last", entry_price)
 
+    # Look up lot size from DB for F&O instruments
+    lot_size = 1
+    with get_db() as db:
+        asset_row = db.query(AssetORM).filter(AssetORM.symbol == symbol).first()
+        if asset_row:
+            lot_size = asset_row.lot_size or 1
+
+    from ..utils import snap_to_lot
     if sell_pct:
-        actual_qty = max(1, int(qty * float(sell_pct) / 100))
+        raw_qty = int(qty * float(sell_pct) / 100)
+        actual_qty = snap_to_lot(raw_qty, lot_size)
     else:
-        actual_qty = min(int(sell_qty), qty)
+        actual_qty = snap_to_lot(int(sell_qty), lot_size)
+    actual_qty = min(actual_qty, qty)
 
     if actual_qty <= 0:
-        return {"error": "Calculated sell quantity is 0"}
+        return {"error": f"Calculated sell quantity is 0 (lot_size={lot_size})"}
 
     buy_value = entry_price * actual_qty
     sell_value = price * actual_qty

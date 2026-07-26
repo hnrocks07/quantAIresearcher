@@ -34,3 +34,10 @@ async def retry_async(
 
     logger.warning(f"{label} failed after {max_retries + 1} attempts: {last_error}")
     raise last_error
+
+
+def snap_to_lot(qty: int | float, lot_size: int) -> int:
+    if lot_size <= 1:
+        return max(1, int(qty))
+    lots = int(qty) // lot_size
+    return max(lot_size, lots * lot_size)
