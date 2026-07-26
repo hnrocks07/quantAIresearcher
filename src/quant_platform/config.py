@@ -85,7 +85,7 @@ class Settings(BaseSettings):
     promotion_min_trades: int = 20
 
     # Drawdown auto-pause threshold
-    max_strategy_drawdown: float = 0.15
+    max_strategy_drawdown: float = 0.05
 
     def ensure_dirs(self) -> None:
         Path(self.data_dir).mkdir(parents=True, exist_ok=True)
