@@ -100,6 +100,7 @@ class OHLCVORM(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     asset_id = Column(Integer, ForeignKey("assets.id", ondelete="CASCADE"), nullable=False)
     date = Column(DateTime, nullable=False)
+    interval = Column(String(10), nullable=False, default="1d")
     open = Column(Float, nullable=False)
     high = Column(Float, nullable=False)
     low = Column(Float, nullable=False)
@@ -108,9 +109,10 @@ class OHLCVORM(Base):
     volume = Column(Float, nullable=False, default=0)
 
     __table_args__ = (
-        UniqueConstraint("asset_id", "date", name="uq_ohlcv_asset_date"),
+        UniqueConstraint("asset_id", "date", "interval", name="uq_ohlcv_asset_date_interval"),
         Index("ix_ohlcv_date", "date"),
         Index("ix_ohlcv_asset_date", "asset_id", "date"),
+        Index("ix_ohlcv_interval", "interval"),
     )
 
     asset = relationship("AssetORM", back_populates="ohlcv")

@@ -58,6 +58,9 @@ class Settings(BaseSettings):
 
     # Data provider — plug-and-play, swap via env var
     data_provider: str = "yfinance"
+    indstocks_token: str | None = None
+    auto_update_enabled: bool = True
+    auto_update_time: str = "15:45"
 
     # TradingView — plug-and-play research source
     research_source: str = "tradingview"

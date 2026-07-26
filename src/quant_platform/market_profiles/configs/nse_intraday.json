@@ -1,0 +1,26 @@
+{
+  "name": "nse_intraday",
+  "display_name": "NSE Intraday (5m/15m Scalping)",
+  "data_provider": "indstocks",
+  "currency": "INR",
+  "exchange": "NSE",
+  "asset_type": "equity",
+  "history_years": 1,
+  "lot_size_default": 1,
+  "tick_size_default": 0.05,
+  "trading_hours": {
+    "market_open": "09:15",
+    "market_close": "15:30",
+    "timezone": "Asia/Kolkata"
+  },
+  "fee_defaults": {
+    "commission_per_order": 20.0,
+    "stt_pct": 0.025,
+    "gst_pct": 0.18,
+    "exchange_charge_pct": 0.0035,
+    "sebi_charge_pct": 0.000001,
+    "stamp_duty_pct": 0.00003
+  },
+  "instruments_source": "provider",
+  "instruments": []
+}

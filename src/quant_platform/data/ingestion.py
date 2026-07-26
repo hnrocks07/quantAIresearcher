@@ -40,6 +40,8 @@ class IngestionService:
         self._stop_requested: bool = False
         self._task: asyncio.Task | None = None
         self._provider_name: str | None = provider_name
+        self._interval: str = "1d"
+        self._auto_update_task: asyncio.Task | None = None
 
     def status(self) -> dict[str, Any]:
         elapsed = 0.0
@@ -60,7 +62,7 @@ class IngestionService:
     def errors(self) -> list[dict[str, Any]]:
         return self._errors[-100:]
 
-    async def start(self, profile_name: str = "nse_equity") -> dict[str, str]:
+    async def start(self, profile_name: str = "nse_equity", interval: str = "1d") -> dict[str, str]:
         if self._status == IngestionStatus.RUNNING:
             return {"error": "Already running"}
 
@@ -71,9 +73,10 @@ class IngestionService:
         self._rows_inserted = 0
         self._errors = []
         self._stop_requested = False
+        self._interval = interval
 
         self._task = asyncio.create_task(self._run(profile_name))
-        return {"status": "started", "profile": profile_name}
+        return {"status": "started", "profile": profile_name, "interval": interval}
 
     async def stop(self) -> dict[str, str]:
         self._stop_requested = True
@@ -130,6 +133,9 @@ class IngestionService:
 
                 # AUTO-PIPELINE: trigger research after ingestion completes
                 await self._auto_start_research(profile_name)
+
+                # Schedule daily auto-update if enabled
+                await self._schedule_daily_update(profile_name)
             finally:
                 await provider.disconnect()
 
@@ -138,6 +144,73 @@ class IngestionService:
             self._completed_at = time.monotonic()
             logger.error(f"Ingestion failed: {e}")
             self._errors.append({"error": str(e), "fatal": True})
+
+    async def _schedule_daily_update(self, profile_name: str) -> None:
+        """Schedule daily data refresh after market close."""
+        from ..config import get_settings, RunMode
+        settings = get_settings()
+        if not settings.auto_update_enabled or settings.run_mode != RunMode.SERVER:
+            return
+
+        async def _daily_loop():
+            while True:
+                try:
+                    now = datetime.now(timezone.utc)
+                    h, m = (int(x) for x in settings.auto_update_time.split(":"))
+                    ist_offset = timedelta(hours=5, minutes=30)
+                    target_ist = now.replace(hour=0, minute=0, second=0, microsecond=0) + ist_offset
+                    target_utc = target_ist.replace(hour=h, minute=m) - ist_offset
+                    if target_utc <= now:
+                        target_utc += timedelta(days=1)
+                    # Skip weekends
+                    while target_utc.weekday() >= 5:
+                        target_utc += timedelta(days=1)
+                    sleep_seconds = (target_utc - now).total_seconds()
+                    logger.info(f"Daily update scheduled in {sleep_seconds/3600:.1f}h for {profile_name} ({self._interval})")
+                    await asyncio.sleep(sleep_seconds)
+
+                    with get_db() as db:
+                        last_row = db.query(OHLCVORM.date).filter(
+                            OHLCVORM.interval == self._interval
+                        ).order_by(OHLCVORM.date.desc()).first()
+                    last_date = last_row[0] if last_row else datetime.now(timezone.utc) - timedelta(days=7)
+
+                    self._status = IngestionStatus.RUNNING
+                    self._started_at = time.monotonic()
+                    self._completed_at = None
+                    self._processed = 0
+                    self._rows_inserted = 0
+                    self._errors = []
+                    self._stop_requested = False
+
+                    profile = load_profile(profile_name)
+                    provider = self._get_provider(profile)
+                    await provider.connect()
+                    try:
+                        instruments = await self._resolve_instruments(profile, provider)
+                        self._total_instruments = len(instruments)
+                        for i, inst in enumerate(instruments):
+                            if self._stop_requested:
+                                break
+                            self._current_symbol = inst["symbol"]
+                            try:
+                                rows = await self._fetch_instrument(inst, profile, provider)
+                                self._rows_inserted += rows
+                            except Exception as e:
+                                self._errors.append({"symbol": inst["symbol"], "error": str(e)})
+                            self._processed = i + 1
+                    finally:
+                        await provider.disconnect()
+
+                    self._status = IngestionStatus.COMPLETED
+                    self._completed_at = time.monotonic()
+                    logger.info(f"Daily update complete: {self._rows_inserted} rows ({self._interval})")
+                except Exception as e:
+                    logger.error(f"Daily update failed: {e}")
+                    await asyncio.sleep(3600)
+
+        self._auto_update_task = asyncio.create_task(_daily_loop())
+        logger.info(f"Daily auto-update enabled for {profile_name} at {settings.auto_update_time} IST")
 
     async def _auto_start_research(self, profile_name: str) -> None:
         """Auto-trigger research + TV discovery + paper trading after ingestion."""
@@ -225,7 +298,7 @@ class IngestionService:
         end_date = datetime.now(timezone.utc)
         start_date = end_date - timedelta(days=profile.history_years * 365)
 
-        ohlcv_rows = await provider.fetch_ohlcv(symbol, start_date, end_date)
+        ohlcv_rows = await provider.fetch_ohlcv(symbol, start_date, end_date, interval=self._interval)
 
         if not ohlcv_rows:
             return 0
@@ -265,24 +338,27 @@ class IngestionService:
                 db.flush()
 
             existing_dates = set()
-            existing = db.query(OHLCVORM.date).filter(OHLCVORM.asset_id == asset.id).all()
+            existing = db.query(OHLCVORM.date).filter(
+                OHLCVORM.asset_id == asset.id,
+                OHLCVORM.interval == self._interval,
+            ).all()
             for row in existing:
-                existing_dates.add(row[0].date() if hasattr(row[0], 'date') else row[0])
+                existing_dates.add(row[0].isoformat() if hasattr(row[0], 'isoformat') else str(row[0]))
 
             rows_added = 0
             for ohlcv in ohlcv_rows:
                 dt = ohlcv["date"]
-                if hasattr(dt, 'date'):
-                    date_key = dt.date()
-                else:
-                    date_key = dt
+                if not hasattr(dt, 'hour'):
+                    dt = datetime.combine(dt, datetime.min.time(), tzinfo=timezone.utc)
 
+                date_key = dt.isoformat()
                 if date_key in existing_dates:
                     continue
 
                 ohlcv_orm = OHLCVORM(
                     asset_id=asset.id,
-                    date=dt if hasattr(dt, 'hour') else datetime.combine(dt, datetime.min.time(), tzinfo=timezone.utc),
+                    date=dt,
+                    interval=self._interval,
                     open=float(ohlcv.get("open", 0)),
                     high=float(ohlcv.get("high", 0)),
                     low=float(ohlcv.get("low", 0)),

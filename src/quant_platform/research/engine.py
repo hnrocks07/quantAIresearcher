@@ -386,10 +386,12 @@ class ResearchEngine:
         strategy_id: int,
         asset_id: int,
         symbol: str,
+        interval: str = "1d",
     ) -> BacktestResult:
         with get_db() as db:
             rows = db.query(OHLCVORM).filter(
-                OHLCVORM.asset_id == asset_id
+                OHLCVORM.asset_id == asset_id,
+                OHLCVORM.interval == interval,
             ).order_by(OHLCVORM.date.asc()).all()
 
         if len(rows) < 60:

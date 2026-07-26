@@ -52,6 +52,8 @@ async def lifespan(app: FastAPI):
     from ..data.yfinance_provider import YFinanceProvider
     from ..data.nse_provider import NSEProvider
     from ..data.crypto_provider import CryptoProvider
+    from ..data.indstocks_provider import INDstocksProvider
+    from ..data.nsedata_provider import NSEDataProvider
     try:
         from ..data.jugaad_provider import JugaadNSEProvider
     except ImportError:
@@ -64,6 +66,8 @@ async def lifespan(app: FastAPI):
     registry.register_data_provider("yfinance", YFinanceProvider)
     registry.register_data_provider("nse_bhav", NSEProvider)
     registry.register_data_provider("crypto", CryptoProvider)
+    registry.register_data_provider("indstocks", INDstocksProvider)
+    registry.register_data_provider("nsedata", NSEDataProvider)
     if JugaadNSEProvider is not None:
         registry.register_data_provider("jugaad_nse", JugaadNSEProvider)
 
@@ -146,8 +150,8 @@ async def get_config():
 # --- Data Ingestion ---
 
 @app.post("/ingest/start")
-async def start_ingestion(profile: str = "nse_equity"):
-    return await ingestion_service.start(profile)
+async def start_ingestion(profile: str = "nse_equity", interval: str = "1d"):
+    return await ingestion_service.start(profile, interval)
 
 
 @app.get("/ingest/status")
