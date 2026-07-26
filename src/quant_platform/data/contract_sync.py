@@ -26,6 +26,14 @@ class ContractSync:
         if not settings.contract_sync_enabled:
             return {"enabled": False}
 
+        # Also refresh fee structure from DB seed
+        try:
+            from .fee_sync import fee_sync
+            fee_result = fee_sync.seed()
+            logger.info(f"Fee sync: {fee_result}")
+        except Exception as e:
+            logger.warning(f"Fee sync failed: {e}")
+
         profiles = [profile_name] if profile_name else list_profiles()
         all_results = {}
 

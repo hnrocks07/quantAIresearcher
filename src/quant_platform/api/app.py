@@ -71,6 +71,10 @@ async def lifespan(app: FastAPI):
     if JugaadNSEProvider is not None:
         registry.register_data_provider("jugaad_nse", JugaadNSEProvider)
 
+    # Seed fee structure on startup
+    from ..data.fee_sync import fee_sync
+    fee_sync.seed()
+
     await event_bus.emit("system.startup", "api", mode=settings.run_mode.value)
 
     yield
@@ -449,7 +453,9 @@ async def start_trading(
 ):
     from ..plugins.registry import registry
     if broker_type == "paper":
-        broker = PaperBroker(initial_balance=initial_capital)
+        from ..data.fee_sync import fee_sync
+        db_fees = fee_sync.get_fee_schedule("NSE", "equity_delivery")
+        broker = PaperBroker(initial_balance=initial_capital, fee_schedule=db_fees)
     else:
         try:
             broker = registry.get_broker(broker_type)
@@ -836,6 +842,38 @@ async def book_profit(payload: dict):
         }
 
     return {"error": f"Order not filled: {result.status}", "message": result.message}
+
+
+@app.get("/fees/current")
+async def get_current_fees():
+    """All fee structures across exchanges and segments."""
+    from ..data.fee_sync import fee_sync
+    return {"fees": fee_sync.get_all_fees()}
+
+
+@app.get("/fees/roundtrip")
+async def fee_roundtrip(exchange: str = "NSE", segment: str = "equity_delivery", trade_value: float = 100000):
+    """Calculate exact round-trip fees for a given trade value."""
+    from ..data.fee_sync import fee_sync
+    return fee_sync.calculate_roundtrip(exchange, segment, trade_value)
+
+
+@app.post("/fees/update")
+async def update_fee(payload: dict):
+    """Update fee rates for an exchange/segment. Send exchange, segment, and changed fields."""
+    from ..data.fee_sync import fee_sync
+    exchange = payload.pop("exchange", "")
+    segment = payload.pop("segment", "equity_delivery")
+    if not exchange:
+        return {"error": "exchange is required"}
+    return fee_sync.update_fee(exchange, segment, payload)
+
+
+@app.post("/fees/seed")
+async def reseed_fees():
+    """Re-seed fee database with latest known rates."""
+    from ..data.fee_sync import fee_sync
+    return fee_sync.seed()
 
 
 @app.post("/contracts/sync")

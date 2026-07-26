@@ -283,6 +283,27 @@ class SystemEventORM(Base):
     )
 
 
+class MarketFeeORM(Base):
+    __tablename__ = "market_fees"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    exchange = Column(String(20), nullable=False)
+    segment = Column(String(30), nullable=False, default="equity_delivery")
+    commission_per_order = Column(Float, nullable=False, default=20.0)
+    commission_pct = Column(Float, nullable=False, default=0.0003)
+    stt_pct = Column(Float, nullable=False, default=0.001)
+    gst_pct = Column(Float, nullable=False, default=0.18)
+    stamp_duty_pct = Column(Float, nullable=False, default=0.00015)
+    exchange_charge_pct = Column(Float, nullable=False, default=0.0000345)
+    sebi_charge_pct = Column(Float, nullable=False, default=0.000001)
+    source = Column(String(100), nullable=True)
+    updated_at = Column(DateTime, nullable=False, default=_utcnow, onupdate=_utcnow)
+
+    __table_args__ = (
+        UniqueConstraint("exchange", "segment", name="uq_exchange_segment"),
+    )
+
+
 # --- Pydantic Schemas (API layer) ---
 
 class AssetSchema(BaseModel):
