@@ -87,6 +87,11 @@ class Settings(BaseSettings):
     # Drawdown auto-pause threshold
     max_strategy_drawdown: float = 0.05
 
+    # Trailing profit: trail from peak, harvest 50% at 100% gain
+    trailing_stop_pct: float = 0.15
+    profit_harvest_threshold: float = 1.00
+    profit_harvest_pct: float = 0.50
+
     # Growth target: ₹1L → ₹1Cr in 250 trading days
     growth_target_enabled: bool = True
     growth_target_initial: float = 100000.0

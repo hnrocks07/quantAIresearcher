@@ -258,19 +258,45 @@ class TradingExecutor:
                         # Log trade decision
                         self._log_trade_decision(strategy.id, asset.id, "buy", signals, llm_reasoning)
 
-            elif signals.exits[-1]:
-                positions = await self._broker.positions()
-                for pos in positions:
-                    if pos.get("symbol") == asset.symbol and pos.get("qty", 0) > 0:
-                        quote = await self._broker.quote(asset.symbol)
-                        price = quote.get("last", prices[-1])
+            # Check all open positions for trailing stop and profit harvest
+            positions = await self._broker.positions()
+            for pos in positions:
+                if pos.get("symbol") == asset.symbol and pos.get("qty", 0) > 0:
+                    quote = await self._broker.quote(asset.symbol)
+                    price = quote.get("last", prices[-1])
+                    entry_price = pos.get("avg_price", pos.get("entry_price", price))
+                    peak_price = pos.get("peak_price", max(entry_price, price))
 
-                        # Position scaling — reduce losers
+                    if price > peak_price:
+                        peak_price = price
+
+                    gain_from_entry = (price - entry_price) / entry_price if entry_price > 0 else 0
+                    drop_from_peak = (peak_price - price) / peak_price if peak_price > 0 else 0
+
+                    sell_qty = 0
+                    sell_reason = ""
+
+                    # Profit harvest: at 100% gain, sell 50% and let rest ride
+                    if gain_from_entry >= settings.profit_harvest_threshold:
+                        harvest_qty = max(1, int(pos["qty"] * settings.profit_harvest_pct))
+                        if not pos.get("_harvested"):
+                            sell_qty = harvest_qty
+                            sell_reason = f"harvest_{settings.profit_harvest_pct:.0%}_at_{gain_from_entry:.0%}_gain"
+
+                    # Trailing stop: if price drops X% from peak, exit remaining
+                    elif drop_from_peak >= settings.trailing_stop_pct and gain_from_entry > 0:
+                        sell_qty = pos["qty"]
+                        sell_reason = f"trailing_stop_{drop_from_peak:.1%}_from_peak"
+
+                    # Strategy exit signal: only full exit if losing
+                    elif signals.exits[-1] and gain_from_entry <= 0:
                         sell_qty = pos["qty"]
                         scaled = self._scale_position(pos, strategy)
                         if scaled and scaled.get("action") == "reduce":
                             sell_qty = max(1, int(pos["qty"] * scaled["scale_factor"]))
+                        sell_reason = "signal_exit_losing"
 
+                    if sell_qty > 0:
                         result = await retry_async(
                             self._broker.place_order,
                             symbol=asset.symbol, side="sell", qty=sell_qty,
@@ -281,8 +307,10 @@ class TradingExecutor:
                             self._record_trade(strategy.id, asset.id, "sell", sell_qty, price, result)
                             self._trades_executed += 1
                             activity_feed.log("executor", "trade_executed",
-                                {"symbol": asset.symbol, "side": "sell", "qty": sell_qty, "price": price,
-                                 "strategy": strategy.name})
+                                {"symbol": asset.symbol, "side": "sell", "qty": sell_qty,
+                                 "price": price, "entry_price": entry_price,
+                                 "gain_pct": f"{gain_from_entry:.1%}",
+                                 "reason": sell_reason, "strategy": strategy.name})
 
     async def _check_position_limits(self, symbol: str) -> bool:
         """Check position limits before opening new position."""

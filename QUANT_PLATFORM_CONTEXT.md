@@ -337,7 +337,31 @@ The platform tracks progress against a mathematical growth curve and auto-adjust
 
 ---
 
-## 17. RESUME COMMANDS
+## 17. TRAILING PROFIT + HARVEST STRATEGY
+
+Replaces rigid take-profit exits. Positions trail their peak price and only exit when the price drops a configurable percentage from the high-water mark. At large gains, harvest a portion and let the rest ride.
+
+**Logic (in executor, checked every cycle for every open position):**
+
+1. Track peak_price per position (high water mark from entry)
+2. Calculate gain_from_entry = (current - entry) / entry
+3. Calculate drop_from_peak = (peak - current) / peak
+
+**Exit rules (priority order):**
+- Profit Harvest: If gain >= 100% (QP_PROFIT_HARVEST_THRESHOLD), sell 50% (QP_PROFIT_HARVEST_PCT), let remaining ride with trailing stop
+- Trailing Stop: If price drops >= 15% (QP_TRAILING_STOP_PCT) from peak AND position is profitable, exit all
+- Signal Exit: Strategy exit signal only triggers full exit if position is LOSING (gain <= 0)
+
+**Key design: winning positions are NEVER closed by strategy exit signals.** Only trailing stop or harvest can close a winner. This prevents cutting winners short while still respecting signals for losers.
+
+**Config (all configurable via .env):**
+- QP_TRAILING_STOP_PCT=0.15 (15% drop from peak triggers exit)
+- QP_PROFIT_HARVEST_THRESHOLD=1.00 (100% gain triggers harvest)
+- QP_PROFIT_HARVEST_PCT=0.50 (sell 50% at harvest)
+
+---
+
+## 18. RESUME COMMANDS
 
 - "Resume quant platform" — general resume
 - "Fix Phase 3 partial items" — drawdown auto-trigger + error retry
