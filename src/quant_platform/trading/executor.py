@@ -260,41 +260,52 @@ class TradingExecutor:
 
             # Check all open positions for trailing stop and profit harvest
             positions = await self._broker.positions()
+            fee_schedule = self._broker.fee_schedule()
             for pos in positions:
                 if pos.get("symbol") == asset.symbol and pos.get("qty", 0) > 0:
                     quote = await self._broker.quote(asset.symbol)
                     price = quote.get("last", prices[-1])
                     entry_price = pos.get("avg_price", pos.get("entry_price", price))
                     peak_price = pos.get("peak_price", max(entry_price, price))
+                    qty = pos["qty"]
 
                     if price > peak_price:
                         peak_price = price
 
-                    gain_from_entry = (price - entry_price) / entry_price if entry_price > 0 else 0
+                    # Calculate net profit after ALL fees (brokerage + STT + GST + stamp duty + exchange + SEBI)
+                    buy_value = entry_price * qty
+                    sell_value = price * qty
+                    buy_fees = fee_schedule.calculate_total_fees(buy_value, "buy")
+                    sell_fees = fee_schedule.calculate_total_fees(sell_value, "sell")
+                    total_fees = buy_fees + sell_fees
+                    net_profit = sell_value - buy_value - total_fees
+                    net_gain_pct = net_profit / buy_value if buy_value > 0 else 0
+
+                    gross_gain = (price - entry_price) / entry_price if entry_price > 0 else 0
                     drop_from_peak = (peak_price - price) / peak_price if peak_price > 0 else 0
 
                     sell_qty = 0
                     sell_reason = ""
 
-                    # Profit harvest: at 100% gain, sell 50% and let rest ride
-                    if gain_from_entry >= settings.profit_harvest_threshold:
-                        harvest_qty = max(1, int(pos["qty"] * settings.profit_harvest_pct))
+                    # Profit harvest: at 100% NET gain, sell 50% and let rest ride
+                    if net_gain_pct >= settings.profit_harvest_threshold:
+                        harvest_qty = max(1, int(qty * settings.profit_harvest_pct))
                         if not pos.get("_harvested"):
                             sell_qty = harvest_qty
-                            sell_reason = f"harvest_{settings.profit_harvest_pct:.0%}_at_{gain_from_entry:.0%}_gain"
+                            sell_reason = f"harvest_{settings.profit_harvest_pct:.0%}_at_{net_gain_pct:.0%}_net_gain"
 
-                    # Trailing stop: if price drops X% from peak, exit remaining
-                    elif drop_from_peak >= settings.trailing_stop_pct and gain_from_entry > 0:
-                        sell_qty = pos["qty"]
-                        sell_reason = f"trailing_stop_{drop_from_peak:.1%}_from_peak"
+                    # Trailing stop: only if NET profitable after fees
+                    elif drop_from_peak >= settings.trailing_stop_pct and net_profit > 0:
+                        sell_qty = qty
+                        sell_reason = f"trailing_stop_{drop_from_peak:.1%}_from_peak_net_{net_gain_pct:.1%}"
 
-                    # Strategy exit signal: only full exit if losing
-                    elif signals.exits[-1] and gain_from_entry <= 0:
-                        sell_qty = pos["qty"]
+                    # Strategy exit signal: exit if net losing (fees make it worse)
+                    elif signals.exits[-1] and net_profit <= 0:
+                        sell_qty = qty
                         scaled = self._scale_position(pos, strategy)
                         if scaled and scaled.get("action") == "reduce":
-                            sell_qty = max(1, int(pos["qty"] * scaled["scale_factor"]))
-                        sell_reason = "signal_exit_losing"
+                            sell_qty = max(1, int(qty * scaled["scale_factor"]))
+                        sell_reason = "signal_exit_net_losing"
 
                     if sell_qty > 0:
                         result = await retry_async(
@@ -304,12 +315,15 @@ class TradingExecutor:
                             max_retries=3, base_delay=1.0, label=f"sell_{asset.symbol}",
                         )
                         if result.status == "filled":
+                            actual_sell_fees = fee_schedule.calculate_total_fees(price * sell_qty, "sell")
                             self._record_trade(strategy.id, asset.id, "sell", sell_qty, price, result)
                             self._trades_executed += 1
                             activity_feed.log("executor", "trade_executed",
                                 {"symbol": asset.symbol, "side": "sell", "qty": sell_qty,
                                  "price": price, "entry_price": entry_price,
-                                 "gain_pct": f"{gain_from_entry:.1%}",
+                                 "gross_gain_pct": f"{gross_gain:.1%}",
+                                 "net_gain_pct": f"{net_gain_pct:.1%}",
+                                 "total_fees": round(total_fees, 2),
                                  "reason": sell_reason, "strategy": strategy.name})
 
     async def _check_position_limits(self, symbol: str) -> bool:
