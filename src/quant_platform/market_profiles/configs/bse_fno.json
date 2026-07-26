@@ -6,7 +6,7 @@
   "exchange": "BSE",
   "asset_type": "futures",
   "history_years": 10,
-  "lot_size_default": 20,
+  "lot_size_default": 30,
   "tick_size_default": 0.05,
   "trading_hours": {
     "market_open": "09:15",
@@ -25,7 +25,7 @@
   "instruments_source": "static",
   "instruments": [
     {"symbol": "^BSESN", "name": "SENSEX Futures", "asset_type": "futures", "lot_size": 20, "contract_type": "futures"},
-    {"symbol": "BSE-BANKEX.BO", "name": "BANKEX Futures", "asset_type": "futures", "lot_size": 20, "contract_type": "futures"},
+    {"symbol": "BSE-BANKEX.BO", "name": "BANKEX Futures", "asset_type": "futures", "lot_size": 30, "contract_type": "futures"},
     {"symbol": "RELIANCE.BO", "name": "Reliance Options", "asset_type": "options", "lot_size": 250, "contract_type": "options"},
     {"symbol": "TCS.BO", "name": "TCS Options", "asset_type": "options", "lot_size": 175, "contract_type": "options"},
     {"symbol": "HDFCBANK.BO", "name": "HDFC Bank Options", "asset_type": "options", "lot_size": 550, "contract_type": "options"},

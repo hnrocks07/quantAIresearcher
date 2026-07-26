@@ -28,6 +28,8 @@
   "instruments": [
     {"symbol": "^NSEI", "name": "NIFTY 50", "asset_type": "index"},
     {"symbol": "^NSEBANK", "name": "BANKNIFTY", "asset_type": "index"},
-    {"symbol": "NIFTY_FIN_SERVICE.NS", "name": "FINNIFTY", "asset_type": "index"}
+    {"symbol": "NIFTY_FIN_SERVICE.NS", "name": "FINNIFTY", "asset_type": "index"},
+    {"symbol": "NIFTY_MIDCAP_SELECT.NS", "name": "NIFTY Midcap Select", "asset_type": "index"},
+    {"symbol": "^NSMIDCP", "name": "NIFTY Next 50", "asset_type": "index"}
   ]
 }

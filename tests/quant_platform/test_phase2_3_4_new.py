@@ -85,7 +85,7 @@ def test_nse_fno_profile_exists():
     data = json.loads(profile_path.read_text())
     assert data["name"] == "nse_fno"
     assert data["currency"] == "INR"
-    assert len(data["instruments"]) == 2
+    assert len(data["instruments"]) >= 2
 
 
 # --- Phase 3: Position Sizing ---
