@@ -97,6 +97,12 @@ class Settings(BaseSettings):
     # Contract metadata auto-sync (lot sizes, expiry, contract details)
     contract_sync_enabled: bool = True
 
+    # Liquidity filter — broad universe, only trade liquid stocks
+    liquidity_filter_enabled: bool = True
+    min_avg_daily_volume: int = 100000
+    min_daily_turnover: float = 10000000.0
+    liquidity_lookback_days: int = 20
+
     # Growth target: ₹1L → ₹1Cr in 250 trading days
     growth_target_enabled: bool = True
     growth_target_initial: float = 100000.0

@@ -889,6 +889,58 @@ async def contract_sync_status():
     return contract_sync.status()
 
 
+@app.get("/universe")
+async def tradeable_universe(
+    profile: str = Query("nse_equity"),
+    show_all: bool = Query(False),
+):
+    settings = get_settings()
+    with get_db() as db:
+        query = db.query(AssetORM).filter(
+            AssetORM.market_profile == profile,
+            AssetORM.is_active == True,
+        )
+        all_assets = query.order_by(AssetORM.avg_daily_turnover.desc().nullslast()).all()
+
+        tradeable = []
+        excluded = []
+        for a in all_assets:
+            entry = {
+                "symbol": a.symbol,
+                "name": a.name,
+                "sector": a.sector,
+                "market_cap_category": a.market_cap_category,
+                "avg_daily_volume": round(a.avg_daily_volume, 0) if a.avg_daily_volume else None,
+                "last_close": round(a.last_close, 2) if a.last_close else None,
+                "avg_daily_turnover": round(a.avg_daily_turnover, 0) if a.avg_daily_turnover else None,
+            }
+            passes = (
+                not settings.liquidity_filter_enabled
+                or (
+                    (a.avg_daily_volume or 0) >= settings.min_avg_daily_volume
+                    and (a.avg_daily_turnover or 0) >= settings.min_daily_turnover
+                )
+            )
+            if passes:
+                tradeable.append(entry)
+            else:
+                excluded.append(entry)
+
+    result = {
+        "profile": profile,
+        "filter_enabled": settings.liquidity_filter_enabled,
+        "min_avg_daily_volume": settings.min_avg_daily_volume,
+        "min_daily_turnover": settings.min_daily_turnover,
+        "tradeable_count": len(tradeable),
+        "excluded_count": len(excluded),
+        "total_assets": len(all_assets),
+        "tradeable": tradeable,
+    }
+    if show_all:
+        result["excluded"] = excluded
+    return result
+
+
 @app.get("/growth/milestones")
 async def growth_milestones():
     settings = get_settings()

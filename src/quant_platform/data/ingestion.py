@@ -391,7 +391,38 @@ class IngestionService:
                 rows_added += 1
 
             db.flush()
+
+            self._update_liquidity_stats(db, asset)
+
             return rows_added
+
+    @staticmethod
+    def _update_liquidity_stats(db, asset: "AssetORM") -> None:
+        from ..config import get_settings
+        settings = get_settings()
+        lookback = settings.liquidity_lookback_days
+
+        recent = (
+            db.query(OHLCVORM.volume, OHLCVORM.close)
+            .filter(OHLCVORM.asset_id == asset.id)
+            .order_by(OHLCVORM.date.desc())
+            .limit(lookback)
+            .all()
+        )
+        if not recent:
+            return
+
+        volumes = [r[0] for r in recent if r[0] and r[0] > 0]
+        closes = [r[1] for r in recent if r[1] and r[1] > 0]
+
+        if volumes:
+            asset.avg_daily_volume = sum(volumes) / len(volumes)
+        if closes:
+            asset.last_close = closes[0]
+        if volumes and closes:
+            avg_vol = sum(volumes) / len(volumes)
+            avg_price = sum(closes) / len(closes)
+            asset.avg_daily_turnover = avg_vol * avg_price
 
 
 ingestion_service = IngestionService()

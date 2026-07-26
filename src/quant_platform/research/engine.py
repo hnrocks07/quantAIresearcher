@@ -138,9 +138,19 @@ class ResearchEngine:
                         self._errors.append({"source": "tradingview", "error": str(e)})
 
                 with get_db() as db:
-                    assets = db.query(AssetORM).filter(
+                    from ..config import get_settings
+                    settings = get_settings()
+                    query = db.query(AssetORM).filter(
                         AssetORM.market_profile == profile_name,
                         AssetORM.is_active == True,
+                    )
+                    if settings.liquidity_filter_enabled:
+                        query = query.filter(
+                            AssetORM.avg_daily_volume >= settings.min_avg_daily_volume,
+                            AssetORM.avg_daily_turnover >= settings.min_daily_turnover,
+                        )
+                    assets = query.order_by(
+                        AssetORM.avg_daily_turnover.desc().nullslast()
                     ).limit(top_n_assets).all()
                     asset_ids = [(a.id, a.symbol) for a in assets]
 

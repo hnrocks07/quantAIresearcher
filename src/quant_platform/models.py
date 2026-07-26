@@ -80,6 +80,9 @@ class AssetORM(Base):
     option_type = Column(String(10), nullable=True)
     contract_type = Column(String(20), nullable=True)
     is_active = Column(Boolean, nullable=False, default=True)
+    avg_daily_volume = Column(Float, nullable=True)
+    last_close = Column(Float, nullable=True)
+    avg_daily_turnover = Column(Float, nullable=True)
     created_at = Column(DateTime, nullable=False, default=_utcnow)
     updated_at = Column(DateTime, nullable=False, default=_utcnow, onupdate=_utcnow)
 
@@ -318,6 +321,9 @@ class AssetSchema(BaseModel):
     tick_size: float = Field(default=0.05, gt=0)
     sector: str | None = None
     market_cap_category: str | None = None
+    avg_daily_volume: float | None = None
+    last_close: float | None = None
+    avg_daily_turnover: float | None = None
     is_active: bool = True
 
     model_config = {"from_attributes": True}
