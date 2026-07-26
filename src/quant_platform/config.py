@@ -88,7 +88,9 @@ class Settings(BaseSettings):
     max_strategy_drawdown: float = 0.05
 
     # Trailing profit: trail from peak, harvest 50% at 100% gain
+    trailing_activation_pct: float = 0.05
     trailing_stop_pct: float = 0.15
+    fixed_stop_loss_pct: float = 0.02
     profit_harvest_threshold: float = 1.00
     profit_harvest_pct: float = 0.50
 

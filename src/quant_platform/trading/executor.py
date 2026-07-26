@@ -287,19 +287,25 @@ class TradingExecutor:
                     sell_qty = 0
                     sell_reason = ""
 
-                    # Profit harvest: at 100% NET gain, sell 50% and let rest ride
+                    # Tier 1 — Profit harvest: at 100% NET gain, sell 50% and let rest ride
                     if net_gain_pct >= settings.profit_harvest_threshold:
                         harvest_qty = max(1, int(qty * settings.profit_harvest_pct))
                         if not pos.get("_harvested"):
                             sell_qty = harvest_qty
                             sell_reason = f"harvest_{settings.profit_harvest_pct:.0%}_at_{net_gain_pct:.0%}_net_gain"
 
-                    # Trailing stop: only if NET profitable after fees
-                    elif drop_from_peak >= settings.trailing_stop_pct and net_profit > 0:
-                        sell_qty = qty
-                        sell_reason = f"trailing_stop_{drop_from_peak:.1%}_from_peak_net_{net_gain_pct:.1%}"
+                    # Tier 2 — Trailing stop: only activates after minimum net gain cushion (default 5%)
+                    elif net_gain_pct >= settings.trailing_activation_pct:
+                        if drop_from_peak >= settings.trailing_stop_pct:
+                            sell_qty = qty
+                            sell_reason = f"trailing_stop_{drop_from_peak:.1%}_from_peak_net_{net_gain_pct:.1%}"
 
-                    # Strategy exit signal: exit if net losing (fees make it worse)
+                    # Tier 3 — Below activation: fixed stop-loss from entry (default 2%)
+                    elif gross_gain <= -settings.fixed_stop_loss_pct:
+                        sell_qty = qty
+                        sell_reason = f"fixed_stoploss_{gross_gain:.1%}_below_entry"
+
+                    # Strategy exit signal: only if net losing
                     elif signals.exits[-1] and net_profit <= 0:
                         sell_qty = qty
                         scaled = self._scale_position(pos, strategy)
