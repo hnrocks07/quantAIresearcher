@@ -34,6 +34,15 @@ NIFTY_NEXT_50 = [
     "INDUSTOWER", "JUBLFOOD", "LUPIN", "MARICO", "MCDOWELL-N", "MUTHOOTFIN",
     "NAUKRI", "PGHH", "PIDILITIND", "PNB", "SBICARD", "SIEMENS",
     "SRF", "TORNTPHARM", "TRENT", "VEDL", "ZOMATO",
+    "ADANIENT", "ADANIGREEN", "AUROPHARMA", "DMART", "BAJAJHLDNG",
+    "BANKBARODA", "BOSCHLTD", "CHOLAFIN", "GLAND", "HDFCAMC",
+    "HINDPETRO", "IGL", "INDIGO", "JINDALSTEL", "LTI",
+    "NMDC", "PIIND", "PEL", "SAIL", "YESBANK",
+]
+
+NSE_INDICES = [
+    {"symbol": "NIFTY 50", "name": "Nifty 50 Index", "asset_type": "index"},
+    {"symbol": "BANKNIFTY", "name": "Bank Nifty Index", "asset_type": "index"},
 ]
 
 INTERVAL_FOLDER_MAP = {
@@ -203,8 +212,10 @@ class NSEDataProvider(DataProvider):
         return await loop.run_in_executor(None, _parse)
 
     async def fetch_instruments(self, exchange: str | None = None) -> list[dict[str, Any]]:
-        all_symbols = NIFTY_50 + NIFTY_NEXT_50
         result = []
+        for idx in NSE_INDICES:
+            result.append({**idx, "exchange": "NSE", "currency": "INR"})
+        all_symbols = NIFTY_50 + NIFTY_NEXT_50
         for sym in all_symbols:
             result.append({
                 "symbol": sym,
