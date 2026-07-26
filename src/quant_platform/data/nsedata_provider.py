@@ -1,9 +1,10 @@
-"""NSE-Data CSV provider — bulk historical intraday data from pre-downloaded CSV files."""
+"""NSE-Data CSV provider — bulk historical intraday data, auto-downloaded from Google Drive."""
 
 from __future__ import annotations
 
 import asyncio
 import os
+import zipfile
 from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -12,6 +13,9 @@ from ..plugins.data_provider import DataProvider
 from ..logging import get_logger
 
 logger = get_logger("nsedata_provider")
+
+GDRIVE_FOLDER_ID = "10pmUnHbT01rORkofkTzl1hB1eNtPZrOR"
+GDRIVE_2024_FOLDER_ID = "1zThEsziq0f4QpbdPyB3Z8F1pcKifmT3x"
 
 NIFTY_50 = [
     "RELIANCE", "TCS", "HDFCBANK", "INFY", "ICICIBANK", "HINDUNILVR", "SBIN",
@@ -64,11 +68,42 @@ class NSEDataProvider(DataProvider):
         if csv_count > 0:
             logger.info(f"NSE-Data directory ready: {self._data_dir} ({csv_count} CSVs)")
         else:
-            logger.warning(
-                f"No CSV files found in {self._data_dir}. "
-                f"Download NSE-Data CSVs from GitHub (debaonline4u/NSE-Data) "
-                f"and place them here. Expected structure: {self._data_dir}/5 Minutes/RELIANCE.csv"
-            )
+            logger.info("No CSVs found — auto-downloading from Google Drive (~6.5 GB)...")
+            loop = asyncio.get_event_loop()
+            await loop.run_in_executor(None, self._download_from_gdrive)
+            csv_count = len(list(self._data_dir.rglob("*.csv")))
+            logger.info(f"Download complete: {csv_count} CSVs in {self._data_dir}")
+
+    def _download_from_gdrive(self) -> None:
+        try:
+            import gdown
+        except ImportError:
+            logger.error("gdown not installed. Run: pip install gdown")
+            return
+
+        for folder_id, label in [(GDRIVE_FOLDER_ID, "main"), (GDRIVE_2024_FOLDER_ID, "2024")]:
+            try:
+                dest = self._data_dir / label
+                dest.mkdir(parents=True, exist_ok=True)
+                logger.info(f"Downloading {label} dataset from Google Drive folder {folder_id}...")
+                gdown.download_folder(
+                    id=folder_id,
+                    output=str(dest),
+                    quiet=False,
+                    remaining_ok=True,
+                )
+                for zf in dest.rglob("*.zip"):
+                    try:
+                        with zipfile.ZipFile(zf, "r") as z:
+                            z.extractall(zf.parent)
+                        zf.unlink()
+                        logger.info(f"Extracted {zf.name}")
+                    except Exception as e:
+                        logger.debug(f"Failed to extract {zf}: {e}")
+
+                logger.info(f"{label} dataset downloaded to {dest}")
+            except Exception as e:
+                logger.warning(f"Failed to download {label} dataset: {e}")
 
     async def disconnect(self) -> None:
         pass
