@@ -619,3 +619,71 @@ async def run_rotation():
             trades = db.query(TradeORM).filter(TradeORM.strategy_id == s.id).all()
             perf_data[s.id] = monitor.analyze(s.id, trades)
     return rotator.rotate(strat_list, perf_data)
+
+
+# --- Growth Target Tracking ---
+
+@app.get("/growth/status")
+async def growth_status(portfolio_id: int | None = None):
+    settings = get_settings()
+    if not settings.growth_target_enabled:
+        return {"enabled": False}
+    from ..risk.growth_tracker import GrowthTracker
+    tracker = GrowthTracker(settings)
+    with get_db() as db:
+        portfolio = db.query(PortfolioORM).first() if not portfolio_id else db.query(PortfolioORM).filter(PortfolioORM.id == portfolio_id).first()
+        if not portfolio:
+            return {"error": "No portfolio found"}
+        capital = portfolio.initial_capital
+        from datetime import datetime, timezone
+        now = datetime.now(timezone.utc)
+        created = portfolio.created_at.replace(tzinfo=timezone.utc) if portfolio.created_at and portfolio.created_at.tzinfo is None else (portfolio.created_at or now)
+        trading_day = int((now - created).days * 5 / 7)
+        trades = db.query(TradeORM).filter(TradeORM.portfolio_id == portfolio.id).all()
+        trade_data = []
+        for t in trades:
+            pnl = t.quantity * t.price * (1 if t.side == "sell" else -1)
+            trade_data.append({"pnl": pnl, "pnl_pct": pnl / max(capital, 1)})
+    return tracker.assess(capital, trading_day, trade_data)
+
+
+@app.get("/growth/forecast")
+async def growth_forecast(portfolio_id: int | None = None):
+    settings = get_settings()
+    if not settings.growth_target_enabled:
+        return {"enabled": False}
+    from ..risk.growth_tracker import GrowthTracker
+    tracker = GrowthTracker(settings)
+    with get_db() as db:
+        portfolio = db.query(PortfolioORM).first() if not portfolio_id else db.query(PortfolioORM).filter(PortfolioORM.id == portfolio_id).first()
+        if not portfolio:
+            return {"error": "No portfolio found"}
+        capital = portfolio.initial_capital
+        from datetime import datetime, timezone
+        now = datetime.now(timezone.utc)
+        created = portfolio.created_at.replace(tzinfo=timezone.utc) if portfolio.created_at and portfolio.created_at.tzinfo is None else (portfolio.created_at or now)
+        trading_day = int((now - created).days * 5 / 7)
+        trades = db.query(TradeORM).filter(TradeORM.portfolio_id == portfolio.id).all()
+        wins = [t for t in trades if t.side == "sell" and t.quantity * t.price > 0]
+        losses = [t for t in trades if t.side == "sell" and t.quantity * t.price <= 0]
+        total = len(wins) + len(losses)
+        wr = len(wins) / total if total > 0 else settings.growth_target_win_rate
+        avg_w = settings.growth_target_win_day_pct
+        avg_l = settings.growth_target_loss_day_pct
+    return tracker.worst_case_forecast(capital, trading_day, wr, avg_w, avg_l)
+
+
+@app.get("/growth/milestones")
+async def growth_milestones():
+    settings = get_settings()
+    if not settings.growth_target_enabled:
+        return {"enabled": False}
+    from ..risk.growth_tracker import GrowthTracker
+    tracker = GrowthTracker(settings)
+    return {
+        "milestones": tracker.quarterly_milestones(),
+        "required_daily_rate": round(tracker.required_daily_rate(), 5),
+        "initial": settings.growth_target_initial,
+        "target": settings.growth_target_final,
+        "trading_days": settings.growth_target_trading_days,
+    }

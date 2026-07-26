@@ -87,6 +87,15 @@ class Settings(BaseSettings):
     # Drawdown auto-pause threshold
     max_strategy_drawdown: float = 0.05
 
+    # Growth target: ₹1L → ₹1Cr in 250 trading days
+    growth_target_enabled: bool = True
+    growth_target_initial: float = 100000.0
+    growth_target_final: float = 10000000.0
+    growth_target_trading_days: int = 250
+    growth_target_win_rate: float = 0.60
+    growth_target_win_day_pct: float = 0.045
+    growth_target_loss_day_pct: float = 0.02
+
     def ensure_dirs(self) -> None:
         Path(self.data_dir).mkdir(parents=True, exist_ok=True)
 

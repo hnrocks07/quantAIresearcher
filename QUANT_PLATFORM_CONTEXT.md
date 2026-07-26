@@ -298,7 +298,46 @@ Imported strategies enter pipeline as "discovered" → get backtested → scored
 
 ---
 
-## 16. RESUME COMMANDS
+## 16. GROWTH TARGET ENGINE — 1L to 1Cr in 250 Days
+
+The platform tracks progress against a mathematical growth curve and auto-adjusts strategies.
+
+**The Math:**
+- Start: 1,00,000 → Target: 1,00,00,000 in 250 trading days
+- Required daily compounding rate: ~1.86%
+- Model: 60% win rate, 1:2 R:R (lose max 2%, win 4.5%)
+- Net growth factor: (1.045)^150 x (0.98)^100 = ~100.27
+
+**Quarterly Milestones:**
+- Day 63 (Q1): 3,18,000
+- Day 125 (Q2): 10,15,000
+- Day 188 (Q3): 32,37,000
+- Day 250 (Q4): 1,00,27,000
+
+**Auto-Adjustments:**
+- "on_track" (within 5%): no changes
+- "behind" (5-15% below): increase position size 10%, widen take profit 5%, tighten stops
+- "critical" (>15% below): max position size, demote bottom 30% strategies, emergency research scan
+- "ahead" (>5% above): reduce position size 10%, tighten stops for capital preservation
+- If required daily rate exceeds 3%, flags "target at risk"
+
+**API Endpoints:**
+- GET /growth/status — current progress vs target curve
+- GET /growth/forecast — worst case projection based on actual performance
+- GET /growth/milestones — quarterly targets vs actuals
+
+**Config (all configurable via .env):**
+- QP_GROWTH_TARGET_ENABLED=true
+- QP_GROWTH_TARGET_INITIAL=100000
+- QP_GROWTH_TARGET_FINAL=10000000
+- QP_GROWTH_TARGET_TRADING_DAYS=250
+- QP_GROWTH_TARGET_WIN_RATE=0.60
+- QP_GROWTH_TARGET_WIN_DAY_PCT=0.045
+- QP_GROWTH_TARGET_LOSS_DAY_PCT=0.02
+
+---
+
+## 17. RESUME COMMANDS
 
 - "Resume quant platform" — general resume
 - "Fix Phase 3 partial items" — drawdown auto-trigger + error retry

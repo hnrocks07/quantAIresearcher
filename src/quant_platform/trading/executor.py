@@ -124,6 +124,9 @@ class TradingExecutor:
                 # 5. Post-cycle: strategy rotation
                 await self._run_rotation()
 
+                # 6. Growth target tracking
+                await self._check_growth_target()
+
                 if max_cycles > 0 and self._cycle_count >= max_cycles:
                     logger.info(f"Local mode: completed {max_cycles} cycles, stopping")
                     break
@@ -496,6 +499,86 @@ class TradingExecutor:
 
         except Exception as e:
             logger.debug(f"Rotation error: {e}")
+
+    async def _check_growth_target(self) -> None:
+        settings = get_settings()
+        if not settings.growth_target_enabled:
+            return
+        try:
+            from ..risk.growth_tracker import GrowthTracker
+            from ..risk.auto_adjuster import AutoAdjuster
+
+            tracker = GrowthTracker(settings)
+            balance = await self._broker.balance()
+            current_capital = balance.get("equity", balance.get("cash", 0))
+
+            with get_db() as db:
+                portfolio = db.query(PortfolioORM).filter(
+                    PortfolioORM.id == self._portfolio_id
+                ).first()
+                if not portfolio or not portfolio.created_at:
+                    return
+                from datetime import datetime, timezone
+                now = datetime.now(timezone.utc)
+                created = portfolio.created_at.replace(tzinfo=timezone.utc) if portfolio.created_at.tzinfo is None else portfolio.created_at
+                delta_days = (now - created).days
+                trading_day = int(delta_days * 5 / 7)
+
+                trades = db.query(TradeORM).filter(
+                    TradeORM.portfolio_id == self._portfolio_id
+                ).all()
+                trade_data = []
+                for t in trades:
+                    pnl = t.quantity * t.price * (1 if t.side == "sell" else -1)
+                    trade_data.append({
+                        "pnl": pnl,
+                        "pnl_pct": pnl / max(current_capital, 1),
+                    })
+
+            assessment = tracker.assess(current_capital, trading_day, trade_data)
+            status = assessment["status"]
+
+            activity_feed.log("growth_tracker", status, {
+                "day": trading_day,
+                "current": current_capital,
+                "expected": assessment["expected_capital"],
+                "deviation": f"{assessment['deviation_pct']:.2%}",
+                "required_daily": f"{assessment['required_daily_rate_now']:.3%}",
+                "target_at_risk": assessment["target_at_risk"],
+            }, reasoning=f"Growth {status}: ₹{current_capital:,.0f} vs expected ₹{assessment['expected_capital']:,.0f}")
+
+            if status in ("behind", "critical"):
+                adjuster = AutoAdjuster()
+                with get_db() as db:
+                    active = db.query(StrategyORM).filter(
+                        StrategyORM.status.in_(["paper_trading", "promoted", "shortlisted"])
+                    ).all()
+
+                    if status == "critical":
+                        sorted_strats = sorted(active, key=lambda s: s.win_rate or 0)
+                        demote_count = max(1, len(sorted_strats) * 30 // 100)
+                        for s in sorted_strats[:demote_count]:
+                            s.status = StrategyStatus.DEMOTED.value
+                            activity_feed.log("growth_tracker", "emergency_demote",
+                                {"strategy": s.name},
+                                reasoning=f"Critical deviation: {assessment['deviation_pct']:.2%}")
+                        db.flush()
+                        logger.warning(f"Growth CRITICAL: demoted {demote_count} bottom strategies")
+
+                    for s in active:
+                        params = json.loads(s.parameters) if s.parameters else {}
+                        growth_result = adjuster.growth_adjust(params, assessment)
+                        if growth_result["changes_applied"]:
+                            s.parameters = json.dumps(growth_result["adjusted_params"])
+                            activity_feed.log("growth_tracker", "adjusted",
+                                {"strategy": s.name, "changes": growth_result["changes_applied"]})
+                    db.flush()
+
+            elif status == "ahead":
+                logger.info(f"Growth AHEAD: ₹{current_capital:,.0f} vs ₹{assessment['expected_capital']:,.0f}")
+
+        except Exception as e:
+            logger.debug(f"Growth target check error: {e}")
 
     def _record_trade(
         self, strategy_id: int, asset_id: int, side: str,
