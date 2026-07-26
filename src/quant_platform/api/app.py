@@ -673,6 +673,149 @@ async def growth_forecast(portfolio_id: int | None = None):
     return tracker.worst_case_forecast(capital, trading_day, wr, avg_w, avg_l)
 
 
+@app.get("/positions/live")
+async def live_positions():
+    """All open positions with live price, gross/net P&L, and fee breakdown."""
+    if not trading_executor._broker:
+        return {"error": "Trading not started"}
+    broker = trading_executor._broker
+    fee_schedule = broker.fee_schedule()
+    positions = await broker.positions()
+    result = []
+    for pos in positions:
+        if pos.get("qty", 0) <= 0:
+            continue
+        symbol = pos.get("symbol", "")
+        qty = pos["qty"]
+        entry_price = pos.get("avg_price", pos.get("entry_price", 0))
+        quote = await broker.quote(symbol)
+        current_price = quote.get("last", entry_price)
+        buy_value = entry_price * qty
+        sell_value = current_price * qty
+        buy_fees = fee_schedule.calculate_total_fees(buy_value, "buy")
+        sell_fees = fee_schedule.calculate_total_fees(sell_value, "sell")
+        total_fees = buy_fees + sell_fees
+        gross_pnl = sell_value - buy_value
+        net_pnl = gross_pnl - total_fees
+        gross_pct = gross_pnl / buy_value if buy_value > 0 else 0
+        net_pct = net_pnl / buy_value if buy_value > 0 else 0
+        result.append({
+            "symbol": symbol,
+            "qty": qty,
+            "entry_price": round(entry_price, 2),
+            "current_price": round(current_price, 2),
+            "buy_value": round(buy_value, 2),
+            "sell_value": round(sell_value, 2),
+            "gross_pnl": round(gross_pnl, 2),
+            "gross_pct": round(gross_pct * 100, 2),
+            "total_fees": round(total_fees, 2),
+            "buy_fees": round(buy_fees, 2),
+            "sell_fees": round(sell_fees, 2),
+            "net_pnl": round(net_pnl, 2),
+            "net_pct": round(net_pct * 100, 2),
+        })
+    return {"positions": result, "count": len(result)}
+
+
+@app.post("/positions/book-profit")
+async def book_profit(payload: dict):
+    """Manually book profit — sell by symbol, qty or percentage."""
+    if not trading_executor._broker:
+        return {"error": "Trading not started"}
+    symbol = payload.get("symbol")
+    if not symbol:
+        return {"error": "symbol is required"}
+    sell_pct = payload.get("sell_pct")
+    sell_qty = payload.get("sell_qty")
+    if not sell_pct and not sell_qty:
+        return {"error": "Provide sell_pct (0-100) or sell_qty"}
+
+    broker = trading_executor._broker
+    fee_schedule = broker.fee_schedule()
+    positions = await broker.positions()
+
+    target_pos = None
+    for pos in positions:
+        if pos.get("symbol") == symbol and pos.get("qty", 0) > 0:
+            target_pos = pos
+            break
+    if not target_pos:
+        return {"error": f"No open position for {symbol}"}
+
+    qty = target_pos["qty"]
+    entry_price = target_pos.get("avg_price", target_pos.get("entry_price", 0))
+    quote = await broker.quote(symbol)
+    price = quote.get("last", entry_price)
+
+    if sell_pct:
+        actual_qty = max(1, int(qty * float(sell_pct) / 100))
+    else:
+        actual_qty = min(int(sell_qty), qty)
+
+    if actual_qty <= 0:
+        return {"error": "Calculated sell quantity is 0"}
+
+    buy_value = entry_price * actual_qty
+    sell_value = price * actual_qty
+    buy_fees = fee_schedule.calculate_total_fees(buy_value, "buy")
+    sell_fees = fee_schedule.calculate_total_fees(sell_value, "sell")
+    total_fees = buy_fees + sell_fees
+    gross_pnl = sell_value - buy_value
+    net_pnl = gross_pnl - total_fees
+
+    from ..utils import retry_async
+    result = await retry_async(
+        broker.place_order,
+        symbol=symbol, side="sell", qty=float(actual_qty),
+        order_type="market", price=price,
+        max_retries=3, base_delay=1.0, label=f"manual_book_{symbol}",
+    )
+
+    if result.status == "filled":
+        agent_activity_feed.log("manual_book_profit", "executed", {
+            "symbol": symbol, "qty": actual_qty, "price": round(price, 2),
+            "entry_price": round(entry_price, 2),
+            "gross_pnl": round(gross_pnl, 2),
+            "net_pnl": round(net_pnl, 2),
+            "total_fees": round(total_fees, 2),
+            "remaining_qty": qty - actual_qty,
+        }, reasoning=f"Manual profit booking: {symbol} x{actual_qty} @ {price:.2f}")
+
+        with get_db() as db:
+            trade = TradeORM(
+                portfolio_id=trading_executor._portfolio_id,
+                asset_id=0,
+                strategy_id=0,
+                side="sell",
+                quantity=actual_qty,
+                price=price,
+                commission=round(sell_fees, 2),
+                order_type="market",
+                is_simulated=True,
+                notes=f"manual_book_profit|order_id={result.order_id}",
+            )
+            db.add(trade)
+            db.flush()
+
+        return {
+            "status": "booked",
+            "symbol": symbol,
+            "qty_sold": actual_qty,
+            "remaining_qty": qty - actual_qty,
+            "sell_price": round(price, 2),
+            "entry_price": round(entry_price, 2),
+            "gross_pnl": round(gross_pnl, 2),
+            "net_pnl": round(net_pnl, 2),
+            "total_fees": round(total_fees, 2),
+            "fee_breakdown": {
+                "buy_fees": round(buy_fees, 2),
+                "sell_fees": round(sell_fees, 2),
+            },
+        }
+
+    return {"error": f"Order not filled: {result.status}", "message": result.message}
+
+
 @app.get("/growth/milestones")
 async def growth_milestones():
     settings = get_settings()
