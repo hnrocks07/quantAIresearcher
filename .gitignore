@@ -41,6 +41,9 @@ data/*.db
 data/*.sqlite
 data/ohlcv/
 data/bhav_copies/
+data/nsedata/
+*.db
+*.sqlite3
 
 # Node/React (dashboard)
 node_modules/
