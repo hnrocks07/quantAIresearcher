@@ -20,6 +20,7 @@ from ..plugins.llm import LLMProvider
 from ..kill_switch import kill_switch
 from ..event_bus import event_bus
 from ..logging import get_logger
+from ..utils import retry_async
 from ..research.strategies import BUILTIN_STRATEGIES
 from ..agents.activity_feed import activity_feed
 
@@ -238,9 +239,11 @@ class TradingExecutor:
                 qty = int(position_size / price) if price > 0 else 0
 
                 if qty > 0:
-                    result = await self._broker.place_order(
+                    result = await retry_async(
+                        self._broker.place_order,
                         symbol=asset.symbol, side="buy", qty=float(qty),
                         order_type="market", price=price,
+                        max_retries=3, base_delay=1.0, label=f"buy_{asset.symbol}",
                     )
                     if result.status == "filled":
                         self._record_trade(strategy.id, asset.id, "buy", qty, price, result)
@@ -265,9 +268,11 @@ class TradingExecutor:
                         if scaled and scaled.get("action") == "reduce":
                             sell_qty = max(1, int(pos["qty"] * scaled["scale_factor"]))
 
-                        result = await self._broker.place_order(
+                        result = await retry_async(
+                            self._broker.place_order,
                             symbol=asset.symbol, side="sell", qty=sell_qty,
                             order_type="market", price=price,
+                            max_retries=3, base_delay=1.0, label=f"sell_{asset.symbol}",
                         )
                         if result.status == "filled":
                             self._record_trade(strategy.id, asset.id, "sell", sell_qty, price, result)
@@ -390,6 +395,16 @@ class TradingExecutor:
                 for s in active:
                     trades = db.query(TradeORM).filter(TradeORM.strategy_id == s.id).all()
                     perf = monitor.analyze(s.id, trades, window_days=30)
+
+                    if perf.get("breached_drawdown"):
+                        s.status = StrategyStatus.DEMOTED.value
+                        db.flush()
+                        activity_feed.log("performance_monitor", "auto_paused",
+                            {"strategy": s.name, "drawdown": perf["metrics"]["max_drawdown"],
+                             "threshold": settings.max_strategy_drawdown},
+                            reasoning=f"Drawdown {perf['metrics']['max_drawdown']:.2%} exceeded threshold {settings.max_strategy_drawdown:.2%}")
+                        logger.warning(f"Strategy {s.name} AUTO-PAUSED: drawdown breach")
+                        continue
 
                     if perf["underperforming"]:
                         activity_feed.log("performance_monitor", "flagged",

@@ -47,17 +47,22 @@ class PerformanceMonitor:
         std = float(np.std(pnls)) if len(pnls) > 1 else 1.0
         sharpe = (avg_pnl / std) if std > 0 else 0.0
 
+        dd_threshold = self._settings.max_strategy_drawdown
+
         flags: list[str] = []
         if win_rate < 0.4:
             flags.append(f"Low win rate: {win_rate:.2%}")
-        if max_drawdown > 0.15:
-            flags.append(f"High drawdown: {max_drawdown:.2%}")
+        if max_drawdown > dd_threshold:
+            flags.append(f"High drawdown: {max_drawdown:.2%} (threshold: {dd_threshold:.2%})")
         if sharpe < 0:
             flags.append(f"Negative Sharpe: {sharpe:.2f}")
 
         underperforming = len(flags) > 0
+        breached_drawdown = max_drawdown > dd_threshold
 
-        if underperforming:
+        if breached_drawdown:
+            recommendation = "pause"
+        elif underperforming:
             recommendation = "review"
         else:
             recommendation = "continue"
@@ -70,6 +75,7 @@ class PerformanceMonitor:
                 "sharpe": round(sharpe, 4),
             },
             "underperforming": underperforming,
+            "breached_drawdown": breached_drawdown,
             "flags": flags,
             "recommendation": recommendation,
         }

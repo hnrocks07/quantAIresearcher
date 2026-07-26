@@ -13,6 +13,7 @@ import httpx
 from ..plugins.research import ResearchSource, ImportedStrategy
 from ..database import get_db
 from ..models import StrategyORM
+from ..utils import retry_async
 
 logger = logging.getLogger("tradingview_source")
 
@@ -202,9 +203,10 @@ class TradingViewSource(ResearchSource):
             if len(strategies) >= limit:
                 break
             try:
-                resp = await self._client.get(
-                    TV_SEARCH_SCRIPTS_URL,
+                resp = await retry_async(
+                    self._client.get, TV_SEARCH_SCRIPTS_URL,
                     params={"search": query},
+                    max_retries=3, base_delay=1.0, label=f"tv_search_{query}",
                 )
                 if resp.status_code == 200:
                     data = resp.json()
@@ -253,9 +255,10 @@ class TradingViewSource(ResearchSource):
             return None
 
         try:
-            resp = await self._client.get(
-                f"{TRADINGVIEW_SCRIPT_DETAIL}{script_id}",
+            resp = await retry_async(
+                self._client.get, f"{TRADINGVIEW_SCRIPT_DETAIL}{script_id}",
                 params={"version": "last"},
+                max_retries=2, base_delay=0.5, label=f"tv_script_{script_id}",
             )
             if resp.status_code != 200:
                 return None

@@ -84,6 +84,9 @@ class Settings(BaseSettings):
     promotion_win_rate: float = 0.80
     promotion_min_trades: int = 20
 
+    # Drawdown auto-pause threshold
+    max_strategy_drawdown: float = 0.15
+
     def ensure_dirs(self) -> None:
         Path(self.data_dir).mkdir(parents=True, exist_ok=True)
 

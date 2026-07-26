@@ -10,6 +10,7 @@ import httpx
 
 from ..plugins.data_provider import DataProvider
 from ..logging import get_logger
+from ..utils import retry_async
 
 logger = get_logger("indstocks_provider")
 
@@ -133,9 +134,11 @@ class INDstocksProvider(DataProvider):
             end_ms = int(chunk_end.timestamp() * 1000)
 
             try:
-                resp = await self._client.get(
+                resp = await retry_async(
+                    self._client.get,
                     f"/market/historical/{api_interval}",
                     params={"scrip-codes": scrip, "start_time": start_ms, "end_time": end_ms},
+                    max_retries=3, base_delay=1.0, label=f"indstocks_{symbol}",
                 )
                 if resp.status_code == 200:
                     data = resp.json()
