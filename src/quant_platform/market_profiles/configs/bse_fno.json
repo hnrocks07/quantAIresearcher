@@ -1,0 +1,38 @@
+{
+  "name": "bse_fno",
+  "display_name": "BSE Futures & Options (SENSEX, BANKEX)",
+  "data_provider": "yfinance",
+  "currency": "INR",
+  "exchange": "BSE",
+  "asset_type": "futures",
+  "history_years": 10,
+  "lot_size_default": 20,
+  "tick_size_default": 0.05,
+  "trading_hours": {
+    "market_open": "09:15",
+    "market_close": "15:30",
+    "timezone": "Asia/Kolkata"
+  },
+  "fee_defaults": {
+    "commission_per_order": 20.0,
+    "commission_pct": 0.0003,
+    "stt_pct": 0.0125,
+    "gst_pct": 0.18,
+    "exchange_charge_pct": 0.0002,
+    "sebi_charge_pct": 0.000001,
+    "stamp_duty_pct": 0.00003
+  },
+  "instruments_source": "static",
+  "instruments": [
+    {"symbol": "^BSESN", "name": "SENSEX Futures", "asset_type": "futures", "lot_size": 20, "contract_type": "futures"},
+    {"symbol": "BSE-BANKEX.BO", "name": "BANKEX Futures", "asset_type": "futures", "lot_size": 20, "contract_type": "futures"},
+    {"symbol": "RELIANCE.BO", "name": "Reliance Options", "asset_type": "options", "lot_size": 250, "contract_type": "options"},
+    {"symbol": "TCS.BO", "name": "TCS Options", "asset_type": "options", "lot_size": 175, "contract_type": "options"},
+    {"symbol": "HDFCBANK.BO", "name": "HDFC Bank Options", "asset_type": "options", "lot_size": 550, "contract_type": "options"},
+    {"symbol": "INFY.BO", "name": "Infosys Options", "asset_type": "options", "lot_size": 300, "contract_type": "options"},
+    {"symbol": "ICICIBANK.BO", "name": "ICICI Bank Options", "asset_type": "options", "lot_size": 700, "contract_type": "options"},
+    {"symbol": "SBIN.BO", "name": "SBI Options", "asset_type": "options", "lot_size": 750, "contract_type": "options"},
+    {"symbol": "TATAMOTORS.BO", "name": "Tata Motors Options", "asset_type": "options", "lot_size": 575, "contract_type": "options"},
+    {"symbol": "BAJFINANCE.BO", "name": "Bajaj Finance Options", "asset_type": "options", "lot_size": 125, "contract_type": "options"}
+  ]
+}

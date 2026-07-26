@@ -43,6 +43,16 @@ KNOWN_FEES: list[dict[str, Any]] = [
      "commission_pct": 0.0003, "stt_pct": 0.00025, "gst_pct": 0.18,
      "stamp_duty_pct": 0.00003, "exchange_charge_pct": 0.0000375,
      "sebi_charge_pct": 0.000001, "source": "BSE circular 2026"},
+    # BSE F&O Futures (SENSEX futures, stock futures)
+    {"exchange": "BSE", "segment": "fno_futures", "commission_per_order": 20.0,
+     "commission_pct": 0.0003, "stt_pct": 0.0125, "gst_pct": 0.18,
+     "stamp_duty_pct": 0.00003, "exchange_charge_pct": 0.0002,
+     "sebi_charge_pct": 0.000001, "source": "BSE circular 2026"},
+    # BSE F&O Options (SENSEX options, BANKEX options, stock options)
+    {"exchange": "BSE", "segment": "fno_options", "commission_per_order": 20.0,
+     "commission_pct": 0.0003, "stt_pct": 0.0625, "gst_pct": 0.18,
+     "stamp_duty_pct": 0.00003, "exchange_charge_pct": 0.05,
+     "sebi_charge_pct": 0.000001, "source": "BSE circular 2026"},
     # MCX Commodity
     {"exchange": "MCX", "segment": "commodity_futures", "commission_per_order": 20.0,
      "commission_pct": 0.0003, "stt_pct": 0.01, "gst_pct": 0.18,
