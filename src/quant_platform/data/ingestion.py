@@ -175,6 +175,14 @@ class IngestionService:
                         ).order_by(OHLCVORM.date.desc()).first()
                     last_date = last_row[0] if last_row else datetime.now(timezone.utc) - timedelta(days=7)
 
+                    # Refresh contract metadata (lot sizes, expiry, etc) before data fetch
+                    try:
+                        from .contract_sync import contract_sync
+                        sync_result = await contract_sync.sync(profile_name)
+                        logger.info(f"Contract sync before daily update: {sync_result}")
+                    except Exception as e:
+                        logger.warning(f"Contract sync failed, continuing with data fetch: {e}")
+
                     self._status = IngestionStatus.RUNNING
                     self._started_at = time.monotonic()
                     self._completed_at = None
@@ -335,6 +343,19 @@ class IngestionService:
 
                 asset = AssetORM(**asset_kwargs)
                 db.add(asset)
+                db.flush()
+            else:
+                new_lot = int(inst.get("lot_size", 0))
+                if new_lot > 0 and asset.lot_size != new_lot:
+                    asset.lot_size = new_lot
+                if inst.get("expiry_date") and asset.expiry_date != inst["expiry_date"]:
+                    asset.expiry_date = inst["expiry_date"]
+                if inst.get("strike_price") and asset.strike_price != inst["strike_price"]:
+                    asset.strike_price = inst["strike_price"]
+                if inst.get("option_type") and asset.option_type != inst["option_type"]:
+                    asset.option_type = inst["option_type"]
+                if inst.get("contract_type") and asset.contract_type != inst["contract_type"]:
+                    asset.contract_type = inst["contract_type"]
                 db.flush()
 
             existing_dates = set()

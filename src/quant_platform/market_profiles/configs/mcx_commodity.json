@@ -1,0 +1,39 @@
+{
+  "name": "mcx_commodity",
+  "display_name": "MCX Commodities",
+  "data_provider": "yfinance",
+  "currency": "INR",
+  "exchange": "MCX",
+  "asset_type": "futures",
+  "history_years": 10,
+  "lot_size_default": 1,
+  "tick_size_default": 1.0,
+  "trading_hours": {
+    "market_open": "09:00",
+    "market_close": "23:30",
+    "timezone": "Asia/Kolkata",
+    "note": "Extended hours for global commodities"
+  },
+  "fee_defaults": {
+    "commission_per_order": 20.0,
+    "commission_pct": 0.0003,
+    "stt_pct": 0.01,
+    "gst_pct": 0.18,
+    "exchange_charge_pct": 0.0026,
+    "sebi_charge_pct": 0.000001,
+    "stamp_duty_pct": 0.00003
+  },
+  "instruments_source": "static",
+  "instruments": [
+    {"symbol": "GC=F", "name": "Gold Futures", "asset_type": "futures", "lot_size": 100, "contract_type": "futures", "sector": "Precious Metals"},
+    {"symbol": "SI=F", "name": "Silver Futures", "asset_type": "futures", "lot_size": 30, "contract_type": "futures", "sector": "Precious Metals"},
+    {"symbol": "CL=F", "name": "Crude Oil Futures", "asset_type": "futures", "lot_size": 100, "contract_type": "futures", "sector": "Energy"},
+    {"symbol": "NG=F", "name": "Natural Gas Futures", "asset_type": "futures", "lot_size": 1250, "contract_type": "futures", "sector": "Energy"},
+    {"symbol": "HG=F", "name": "Copper Futures", "asset_type": "futures", "lot_size": 1000, "contract_type": "futures", "sector": "Base Metals"},
+    {"symbol": "ZS=F", "name": "Soybean Futures", "asset_type": "futures", "lot_size": 100, "contract_type": "futures", "sector": "Agriculture"},
+    {"symbol": "CT=F", "name": "Cotton Futures", "asset_type": "futures", "lot_size": 25, "contract_type": "futures", "sector": "Agriculture"},
+    {"symbol": "PA=F", "name": "Palladium Futures", "asset_type": "futures", "lot_size": 1, "contract_type": "futures", "sector": "Precious Metals"},
+    {"symbol": "PL=F", "name": "Platinum Futures", "asset_type": "futures", "lot_size": 1, "contract_type": "futures", "sector": "Precious Metals"},
+    {"symbol": "ZC=F", "name": "Corn Futures", "asset_type": "futures", "lot_size": 100, "contract_type": "futures", "sector": "Agriculture"}
+  ]
+}

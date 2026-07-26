@@ -838,6 +838,19 @@ async def book_profit(payload: dict):
     return {"error": f"Order not filled: {result.status}", "message": result.message}
 
 
+@app.post("/contracts/sync")
+async def sync_contracts(profile: str | None = None):
+    """Refresh lot sizes, expiry dates, contract metadata from exchange."""
+    from ..data.contract_sync import contract_sync
+    return await contract_sync.sync(profile)
+
+
+@app.get("/contracts/status")
+async def contract_sync_status():
+    from ..data.contract_sync import contract_sync
+    return contract_sync.status()
+
+
 @app.get("/growth/milestones")
 async def growth_milestones():
     settings = get_settings()

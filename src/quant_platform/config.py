@@ -94,6 +94,9 @@ class Settings(BaseSettings):
     profit_harvest_threshold: float = 1.00
     profit_harvest_pct: float = 0.50
 
+    # Contract metadata auto-sync (lot sizes, expiry, contract details)
+    contract_sync_enabled: bool = True
+
     # Growth target: ₹1L → ₹1Cr in 250 trading days
     growth_target_enabled: bool = True
     growth_target_initial: float = 100000.0
